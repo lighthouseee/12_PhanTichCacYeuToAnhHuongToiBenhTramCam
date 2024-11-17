@@ -86,9 +86,6 @@ print("\nSố lượng giá trị thiếu trong từng cột:\n", missing_values
 data = data[(data['Age'] >= 0) & (data['Age'] <= 120)]  # Loại bỏ tuổi bất hợp lệ
 data = data[data['Income'] >= 0]  # Loại bỏ thu nhập âm
 
-# 2. Xóa cột Name vì tên không cần thiết cho việc xem xét
-data.drop(columns=['Name'], inplace=True)
-
 # 3. Điền giá trị thiếu
 for col in data.columns:
     if data[col].dtype in ['int64', 'float64']:
