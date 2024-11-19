@@ -1,6 +1,4 @@
 import csv
-import pandas as pd
-import math
 
 # Đường dẫn file CSV
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -14,14 +12,55 @@ FIELD_NAMES = [
     "Family History of Depression", "Chronic Medical Conditions"
 ]
 
-# Tải dữ liệu từ file CSV
-def load_data():
+# Đọc dữ liệu từ file CSV
+def read_csv_data():
     try:
         with open(CSV_FILE, mode="r", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             return [dict(row) for row in reader]
     except FileNotFoundError:
         return []
+
+def paginate_data(data, page_size):
+    """
+    Phân trang dữ liệu và xử lý điều hướng giữa các trang.
+    :param data: DataFrame
+    :param page_size: Số dòng mỗi trang
+    """
+    total_pages = (len(data) + page_size - 1) // page_size  # Tính tổng số trang
+    current_page = 1
+    line_width = 175
+
+    while True:
+        # Lấy dữ liệu của trang hiện tại
+        start_idx = (current_page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_data = data.iloc[start_idx:end_idx]
+
+        # Hiển thị dữ liệu
+        print(paginated_data)
+        
+        # Canh giữa cho số trang
+        page_info = f"Trang {current_page}/{total_pages}"
+        padding = (line_width - len(page_info)) // 2
+        print("\n" + " " * padding + page_info + " " * padding + "\n")
+        print(" " * line_width)
+
+        # Điều hướng giữa các trang
+        if total_pages > 1:
+            action = input("Nhập 'n' để sang trang, 'p' để quay lại, hoặc 'q' để thoát: ").strip().lower()
+            if action == "n" and current_page < total_pages:
+                current_page += 1
+            elif action == "p" and current_page > 1:
+                current_page -= 1
+            elif action == "q":
+                print("Thoát phân trang.")
+                break
+            else:
+                print("Lựa chọn không hợp lệ!")
+        else:
+            print("Không có thêm trang nào.")
+            break
 
 # Lưu dữ liệu vào file CSV
 def save_data(data):
@@ -30,84 +69,23 @@ def save_data(data):
         writer.writeheader()
         writer.writerows(data)
 
-# Hiển thị dữ liệu với phân trang
-def display_data(data, page_size=10):
-    total_pages = math.ceil(len(data) / page_size)
-    page = 1
-
-    while True:
-        start_idx = (page - 1) * page_size
-        end_idx = start_idx + page_size
-        subset = data[start_idx:end_idx]
-
-        # Hiển thị dưới dạng bảng
-        print(pd.DataFrame(subset))
-        print(f"Trang {page}/{total_pages}")
-
-        # Điều hướng phân trang
-        print("Nhập 'n' để trang tiếp theo, 'p' để quay lại, hoặc 'q' để thoát.")
-        choice = input("Lựa chọn: ").strip().lower()
-
-        if choice == 'n' and page < total_pages:
-            page += 1
-        elif choice == 'p' and page > 1:
-            page -= 1
-        elif choice == 'q':
-            break
-        else:
-            print("Lựa chọn không hợp lệ!")
-
 # Tạo dữ liệu mới
-def create_data(data):
-    try:
-        create_name = input(" Lưu ý khi nhập dữ liệu mới phải nhập cả họ tên(bấm ENTER để tiếp tục). ")
-        new_entry = {}
-        for field in FIELD_NAMES:
-            value = input(f"Nhập {field}: ").strip()
-            new_entry[field] = value
-
-        data.append(new_entry)
-        save_data(data)
-        print("Thêm dữ liệu thành công!")
-    except ValueError:
-        print("Dữ liệu nhập không hợp lệ!")
+def create_data(data, new_entry):
+    data.append(new_entry)
+    save_data(data)
 
 # Cập nhật dữ liệu
-def update_data(data):
-    try:
-        update_name = input("Nhập tên (Name) của dòng muốn cập nhật (Lưu ý: khi cập nhập tên phải nhập cả họ tên): ").strip()
-        record = next((item for item in data if item["Name"] == update_name), None)
-
-        if record:
-            print(f"Dữ liệu hiện tại: {record}")
-            for field in FIELD_NAMES:
-                new_value = input(f"Nhập {field} mới (hoặc Enter để giữ nguyên): ").strip()
-                if new_value:
-                    record[field] = new_value
-            save_data(data)
-            print("Cập nhật thành công!")
-        else:
-            print("Không tìm thấy dòng dữ liệu với tên đã nhập.")
-    except ValueError:
-        print("Dữ liệu nhập không hợp lệ!")
+def update_data(data, target_name, updated_entry):
+    record = next((item for item in data if item["Name"] == target_name), None)
+    if record:
+        record.update(updated_entry)
+        save_data(data)
+        return True
+    return False
 
 # Xóa dữ liệu
-def delete_data(data):
-    try:
-        delete_names = input("Nhập tên (Name) các dòng muốn xóa (phân cách bằng dấu phẩy và xóa phải nhập đầy đủ họ tên): ").strip()
-        delete_names = delete_names.split(',')
-
-        data[:] = [item for item in data if item["Name"] not in delete_names]
-        save_data(data)
-        print("Xóa dữ liệu thành công!")
-    except ValueError:
-        print("Dữ liệu nhập không hợp lệ!")
-
-# Chương trình chính
-def main():
-    data = load_data()
-
-    
-
-if __name__ == "__main__":
-    main()
+def delete_data(data, target_names):
+    initial_count = len(data)
+    data[:] = [item for item in data if item["Name"] not in target_names]
+    save_data(data)
+    return len(data) < initial_count
