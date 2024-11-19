@@ -31,7 +31,7 @@ def save_data(data):
         writer.writerows(data)
 
 # Hiển thị dữ liệu với phân trang
-def display_data(data, page_size=4):
+def display_data(data, page_size=10):
     total_pages = math.ceil(len(data) / page_size)
     page = 1
 
@@ -60,6 +60,7 @@ def display_data(data, page_size=4):
 # Tạo dữ liệu mới
 def create_data(data):
     try:
+        create_name = input(" Lưu ý khi nhập dữ liệu mới phải nhập cả họ tên(bấm ENTER để tiếp tục). ")
         new_entry = {}
         for field in FIELD_NAMES:
             value = input(f"Nhập {field}: ").strip()
@@ -74,7 +75,7 @@ def create_data(data):
 # Cập nhật dữ liệu
 def update_data(data):
     try:
-        update_name = input("Nhập tên (Name) của dòng muốn cập nhật: ").strip()
+        update_name = input("Nhập tên (Name) của dòng muốn cập nhật (Lưu ý: khi cập nhập tên phải nhập cả họ tên): ").strip()
         record = next((item for item in data if item["Name"] == update_name), None)
 
         if record:
@@ -93,7 +94,7 @@ def update_data(data):
 # Xóa dữ liệu
 def delete_data(data):
     try:
-        delete_names = input("Nhập tên (Name) các dòng muốn xóa (phân cách bằng dấu phẩy): ").strip()
+        delete_names = input("Nhập tên (Name) các dòng muốn xóa (phân cách bằng dấu phẩy và xóa phải nhập đầy đủ họ tên): ").strip()
         delete_names = delete_names.split(',')
 
         data[:] = [item for item in data if item["Name"] not in delete_names]
@@ -106,28 +107,7 @@ def delete_data(data):
 def main():
     data = load_data()
 
-    while True:
-        print("\nMenu:")
-        print("1. Hiển thị danh sách dữ liệu")
-        print("2. Tạo dữ liệu mới")
-        print("3. Cập nhật dữ liệu")
-        print("4. Xóa dữ liệu")
-        print("5. Thoát")
-
-        choice = input("Lựa chọn: ").strip()
-        if choice == '1':
-            display_data(data)
-        elif choice == '2':
-            create_data(data)
-        elif choice == '3':
-            update_data(data)
-        elif choice == '4':
-            delete_data(data)
-        elif choice == '5':
-            print("Thoát chương trình.")
-            break
-        else:
-            print("Lựa chọn không hợp lệ!")
+    
 
 if __name__ == "__main__":
     main()
