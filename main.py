@@ -1,5 +1,5 @@
-from CRUD.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data
-from Tool.tool import sort_data, search_data, filter_data, filter_depression_risk
+from crud.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data
+from tool.tool import sort_data, search_data, filter_data, filter_depression_risk
 import pandas as pd
 
 CSV_FILE = "cleaned_and_predicted_data.csv"
