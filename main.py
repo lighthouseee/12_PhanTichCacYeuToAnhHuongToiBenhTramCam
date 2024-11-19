@@ -1,5 +1,5 @@
 from crud.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data
-from tool.tool import sort_data, search_data, filter_data, filter_depression_risk
+from tool.tool import sort_data, search_data, filter_data
 import pandas as pd
 
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -16,20 +16,19 @@ def main():
         print("5. Sắp xếp dữ liệu")
         print("6. Tìm kiếm dữ liệu")
         print("7. Lọc dữ liệu")
-        print("8. Lọc rủi ro trầm cảm cao")
-        print("9. Thoát")
+        print("8. Thoát")
         choice = input("Chọn thao tác: ").strip()
 
-        if choice == "1":
+        if choice == "1": # Xem dữ liệu
             page_size = int(input("Nhập số dòng mỗi trang: "))
             paginate_data(data, page_size)
 
-        elif choice == "2":
+        elif choice == "2": # Thêm dữ liệu
             new_entry = {col: input(f"Nhập {col}: ").strip() for col in data.columns}
             create_data(data.to_dict("records"), new_entry)
             print("Thêm dữ liệu thành công!")
 
-        elif choice == "3":
+        elif choice == "3": # Cập nhật dữ liệu
             target_name = input("Nhập tên cần cập nhật: ").strip()
             updated_entry = {col: input(f"Nhập {col} mới (hoặc Enter để bỏ qua): ").strip() for col in data.columns}
             updated_entry = {k: v for k, v in updated_entry.items() if v}
@@ -38,7 +37,7 @@ def main():
             else:
                 print("Không tìm thấy dữ liệu!")
 
-        elif choice == "4":
+        elif choice == "4": # Xóa dữ liệu 
             target_names = input("Nhập tên cần xóa (phân cách bằng dấu phẩy): ").split(", ")
             if delete_data(data.to_dict("records"), target_names):
                 print("Xóa thành công!")
@@ -63,13 +62,7 @@ def main():
             page_size = int(input("Nhập số dòng mỗi trang: "))
             paginate_data(filtered_data, page_size)
 
-        elif choice == "8":  # Lọc theo nguy cơ trầm cảm cao
-            risk_data = filter_depression_risk(data)
-            print("Dữ liệu lọc theo nguy cơ trầm cảm cao:")
-            page_size = int(input("Nhập số dòng mỗi trang: "))
-            paginate_data(risk_data, page_size)
-
-        elif choice == "9":
+        elif choice == "8":
             print("Thoát chương trình.")
             break
 

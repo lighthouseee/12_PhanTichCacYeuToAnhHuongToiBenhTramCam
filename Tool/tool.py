@@ -6,7 +6,7 @@ CSV_FILE = "cleaned_and_predicted_data.csv"
 # Đọc dữ liệu từ file CSV
 def read_csv_data():
     """
-    Đọc dữ liệu từ file CSV.
+    Đọc dữ liệu từ file CSV
     :return: DataFrame chứa dữ liệu
     """
     try:
@@ -23,7 +23,7 @@ def read_csv_data():
 # Sắp xếp dữ liệu
 def sort_data(data, columns=None, ascending=None):
     """
-    Sắp xếp dữ liệu theo các cột chỉ định.
+    Sắp xếp dữ liệu theo các cột chỉ định
     :param data: DataFrame
     :param columns: Danh sách các cột cần sắp xếp
     :param ascending: True/False hoặc danh sách True/False xác định thứ tự sắp xếp
@@ -36,7 +36,7 @@ def sort_data(data, columns=None, ascending=None):
         print(list(data.columns))
         columns = input("Nhập tên các cột muốn sắp xếp (phân cách bằng dấu phẩy nếu nhiều cột): ").strip().split(',')
     
-    columns = [col.strip().lower() for col in columns]  # Chuyển tên cột người dùng nhập về chữ thường
+    columns = [col.strip().lower() for col in columns]
     
     # Kiểm tra các cột nhập vào có tồn tại trong dữ liệu hay không
     for col in columns:
@@ -61,7 +61,7 @@ def sort_data(data, columns=None, ascending=None):
 # Tìm kiếm dữ liệu
 def search_data(data, column=None, keyword=None):
     """
-    Tìm kiếm các dòng có giá trị chứa từ khóa trong cột chỉ định.
+    Tìm kiếm các dòng có giá trị chứa từ khóa trong cột chỉ định
     :param data: DataFrame
     :param column: Cột cần tìm kiếm
     :param keyword: Từ khóa tìm kiếm
@@ -72,7 +72,7 @@ def search_data(data, column=None, keyword=None):
     if column is None or keyword is None:
         print("Danh sách các cột hiện có trong dữ liệu:")
         print(list(data.columns))
-        column = input("Nhập tên cột muốn tìm kiếm: ").strip().lower()  # Chuyển cột người dùng nhập thành chữ thường
+        column = input("Nhập tên cột muốn tìm kiếm: ").strip().lower()  
         keyword = input("Nhập từ khóa tìm kiếm: ").strip()
     
     if column not in data.columns:
@@ -85,7 +85,7 @@ def search_data(data, column=None, keyword=None):
 # Lọc dữ liệu theo điều kiện
 def filter_data(data, column=None, condition=None):
     """
-    Lọc dữ liệu theo điều kiện (ví dụ: ">= 30").
+    Lọc dữ liệu theo điều kiện
     :param data: DataFrame
     :param column: Cột cần áp dụng bộ lọc
     :param condition: Điều kiện lọc (chuỗi)
@@ -96,8 +96,8 @@ def filter_data(data, column=None, condition=None):
     if column is None or condition is None:
         print("Danh sách các cột hiện có trong dữ liệu:")
         print(list(data.columns))
-        column = input("Nhập tên cột muốn lọc: ").strip().lower()  # Chuyển cột người dùng nhập thành chữ thường
-        condition = input("Nhập điều kiện lọc (ví dụ: >= 30): ").strip()
+        column = input("Nhập tên cột muốn lọc: ").strip().lower() 
+        condition = input("Nhập điều kiện lọc: ").strip()
     
     if column not in data.columns:
         print(f"Lỗi: Cột '{column}' không tồn tại trong dữ liệu.")
@@ -115,10 +115,23 @@ def filter_depression_risk(data):
     """
     Lọc ra các dòng có giá trị 'High' hoặc 'Very High' trong cột 'Depression Risk'.
     """
-    column = 'depression risk'  # Đảm bảo tên cột là chữ thường
+    column = 'Depression Risk'  
     if column not in data.columns:
         print(f"Lỗi: Cột '{column}' không tồn tại trong dữ liệu.")
         return pd.DataFrame()
     
     print(f"Lọc các dòng có rủi ro trầm cảm 'High' hoặc 'Very High' trong cột '{column}'.")
-    return data[data[column].isin(['High', 'Very High'])]
+    filtered_data = data[data[column].isin(['High', 'Very High'])]
+    
+    # Lưu trữ dữ liệu lọc vào một file CSV để tiến hành vẽ biểu đồ
+    filtered_data.to_csv("filtered_depression_data.csv", index=False)
+    print("Đã lưu trữ dữ liệu vào file filtered_depression_data.csv ")
+    return filtered_data
+
+# Đọc dữ liệu từ file CSV và thực hiện lọc theo nguy cơ trầm cảm
+if __name__ == "__main__":
+    data = read_csv_data()
+    if not data.empty:
+        filtered_data = filter_depression_risk(data)
+        
+
