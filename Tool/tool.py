@@ -83,12 +83,16 @@ def search_data(data, column=None, keyword=None):
     return data[data[column].astype(str).str.contains(keyword, case=False, na=False)]
 
 # Lọc dữ liệu theo điều kiện
+import pandas as pd
+
+# Lọc dữ liệu theo điều kiện
 def filter_data(data, column=None, condition=None):
     """
     Lọc dữ liệu theo điều kiện
     :param data: DataFrame
     :param column: Cột cần áp dụng bộ lọc
-    :param condition: Điều kiện lọc (chuỗi)
+    :param condition: Điều kiện lọc (chuỗi hoặc giá trị)
+    :return: DataFrame đã được lọc
     """
     # Chuyển tên cột trong dữ liệu về chữ thường
     data.columns = [col.lower() for col in data.columns]
@@ -96,16 +100,43 @@ def filter_data(data, column=None, condition=None):
     if column is None or condition is None:
         print("Danh sách các cột hiện có trong dữ liệu:")
         print(list(data.columns))
-        column = input("Nhập tên cột muốn lọc: ").strip().lower() 
-        condition = input("Nhập điều kiện lọc: ").strip()
-    
-    if column not in data.columns:
-        print(f"Lỗi: Cột '{column}' không tồn tại trong dữ liệu.")
-        return pd.DataFrame()
+        
+        while True:
+            column = input("Nhập tên cột muốn lọc: ").strip().lower()
+            if column in data.columns:
+                break
+            else:
+                print(f"Lỗi: Cột '{column}' không tồn tại trong dữ liệu. Vui lòng thử lại.")
+        
+        # Hiển thị giá trị duy nhất của cột
+        unique_values = data[column].dropna().unique()
+        unique_values_sorted = sorted(unique_values, key=lambda x: str(x))
+        print(f"Giá trị khả dụng trong cột '{column}':")
+        value_mapping = {str(idx + 1): value for idx, value in enumerate(unique_values_sorted)}
+        
+        for idx, value in value_mapping.items():
+            print(f"{idx}. {value}")
+        
+        # Gợi ý lọc
+        if data[column].dtype == 'object':
+            print("Lọc dạng chữ: nhập số tương ứng với giá trị hoặc sử dụng toán tử (>, <, ==) với giá trị thực.")
+        else:
+            print("Lọc dạng số: sử dụng toán tử '>', '<', '>=', '<=', hoặc '=='.")
+        
+        user_input = input("Nhập điều kiện lọc (ví dụ: '1' hoặc '> 1.5'): ").strip()
+        
+        # Kiểm tra nếu người dùng nhập số ánh xạ
+        if user_input in value_mapping:
+            condition = f'== "{value_mapping[user_input]}"'
+        else:
+            condition = user_input
     
     print(f"Lọc dữ liệu với điều kiện: {column} {condition}.")
     try:
-        return data.query(f"{column} {condition}")
+        # Áp dụng query
+        filtered_data = data.query(f"`{column}` {condition}")
+        print("Đã lọc thành công.")
+        return filtered_data
     except Exception as e:
         print(f"Lỗi khi áp dụng bộ lọc: {e}")
         return pd.DataFrame()
