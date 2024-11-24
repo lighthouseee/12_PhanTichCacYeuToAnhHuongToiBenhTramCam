@@ -46,19 +46,19 @@ def main():
 
         elif choice == "5":  # Sắp xếp dữ liệu
             sorted_data = sort_data(data)
-            print("Dữ liệu sau khi sắp xếp:")
+            print("Dữ liệu sau khi sắp xếp...")
             page_size = int(input("Nhập số dòng mỗi trang: "))
             paginate_data(sorted_data, page_size)
 
         elif choice == "6":  # Tìm kiếm dữ liệu
             search_result = search_data(data)
-            print("Kết quả tìm kiếm:")
+            print("Kết quả tìm kiếm...")
             page_size = int(input("Nhập số dòng mỗi trang: "))
             paginate_data(search_result, page_size)
 
         elif choice == "7":  # Lọc dữ liệu theo điều kiện
             filtered_data = filter_data(data)
-            print("Kết quả lọc dữ liệu:")
+            print("Kết quả lọc dữ liệu...")
             page_size = int(input("Nhập số dòng mỗi trang: "))
             paginate_data(filtered_data, page_size)
 
