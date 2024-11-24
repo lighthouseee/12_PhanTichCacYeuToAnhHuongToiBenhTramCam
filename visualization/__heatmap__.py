@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Đọc file dữ liệu
-file_path = 'C:/Users/USER/Documents/GitHub/do_an_cuoi_ky_python/cleaned_and_predicted_data.csv'
+file_path = 'cleaned_and_predicted_data.csv'
 data = pd.read_csv(file_path)
 
 # Tạo bảng pivot để so sánh giữa tình trạng hôn nhân và nguy cơ trầm cảm
