@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load the dataset
-file_path = r'C:\Users\USER\Documents\GitHub\do_an_cuoi_ky_python\filtered_depression_data.csv'
+file_path = 'filtered_depression_data.csv'
 data = pd.read_csv(file_path)
 
 # Prepare the data
