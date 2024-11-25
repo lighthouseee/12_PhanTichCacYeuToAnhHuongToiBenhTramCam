@@ -323,6 +323,9 @@ def predict_depression_risk(row):
 # Áp dụng hàm dự đoán mức độ trầm cảm vào từng dòng dữ liệu
 data['Depression Risk'] = data.apply(predict_depression_risk, axis=1)
 
+# Kiểm tra kiểu dữ liệu của từng cột
+print("Kiểu dữ liệu của từng cột trong dữ liệu sau khi thêm cột 'Depression Risk':\n")
+print(data.dtypes)
 # ----- Kết quả -----
 # Thông tin sau khi làm sạch và thêm cột "Depression Risk"
 print("\nDữ liệu sau khi làm sạch và thêm cột Depression Risk:\n")
@@ -330,5 +333,10 @@ print(data[['Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'Histo
 
 # Lưu dữ liệu đã làm sạch vào file mới
 output_path = 'cleaned_and_predicted_data.csv'
+
 data.to_csv(output_path, index=False)
 print(f"\nDữ liệu đã được lưu vào file '{output_path}'.")
+
+# Đọc lại dữ liệu từ file mới
+data_cleaned = pd.read_csv(output_path)
+
