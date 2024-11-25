@@ -14,11 +14,22 @@ FIELD_NAMES = [
     "Family History of Depression", "Chronic Medical Conditions"
 ]
 
-# Đọc dữ liệu từ file CSV
+# Đọc dữ liệu từ file CSV và đặt lại chỉ số bắt đầu từ 1
 def read_csv_data():
+    """
+    Đọc dữ liệu từ file CSV và đặt chỉ số bắt đầu từ 1.
+    :return: DataFrame với chỉ số bắt đầu từ 1
+    """
     try:
-        return pd.read_csv(CSV_FILE)
+        data = pd.read_csv(CSV_FILE)
+        data.index = data.index + 1  # Đặt lại chỉ số bắt đầu từ 1
+        print(f"Đã đọc thành công dữ liệu từ file '{CSV_FILE}' với chỉ số bắt đầu từ 1.")
+        return data
     except FileNotFoundError:
+        print(f"Lỗi: File '{CSV_FILE}' không tồn tại.")
+        return pd.DataFrame(columns=FIELD_NAMES)
+    except Exception as e:
+        print(f"Lỗi khi đọc file: {e}")
         return pd.DataFrame(columns=FIELD_NAMES)
 
 def paginate_data(data, page_size):
@@ -86,3 +97,5 @@ def delete_data(data, target_names):
     data = data[~data["Name"].isin(target_names)]
     save_data(data)
     return len(data) < initial_count
+
+

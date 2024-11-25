@@ -26,7 +26,7 @@ def describe_valid_values(df):
             # Các cột kiểu chuỗi
             unique_values = df[col].dropna().unique()
             print(f"  Kiểu dữ liệu hợp lệ: Chuỗi")
-            print(f"  Các giá trị hợp lệ có thể bao gồm: {unique_values[:10]} ...")  # In ra một vài giá trị hợp lệ
+            print(f"  Các giá trị hợp lệ có thể bao gồm: {unique_values[:10]} ...")  
         elif df[col].dtype in ['int64', 'float64']:
             # Các cột kiểu số
             if col == 'Age':
@@ -59,7 +59,6 @@ def describe_valid_values(df):
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
         print("\n")
-
 
 # Gọi hàm mô tả các giá trị hợp lệ
 describe_valid_values(data)
