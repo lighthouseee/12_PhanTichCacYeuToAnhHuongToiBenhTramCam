@@ -1,4 +1,6 @@
 import csv
+import pandas as pd
+import math
 
 # Đường dẫn file CSV
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -15,11 +17,9 @@ FIELD_NAMES = [
 # Đọc dữ liệu từ file CSV
 def read_csv_data():
     try:
-        with open(CSV_FILE, mode="r", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            return [dict(row) for row in reader]
+        return pd.read_csv(CSV_FILE)
     except FileNotFoundError:
-        return []
+        return pd.DataFrame(columns=FIELD_NAMES)
 
 def paginate_data(data, page_size):
     """
@@ -64,21 +64,18 @@ def paginate_data(data, page_size):
 
 # Lưu dữ liệu vào file CSV
 def save_data(data):
-    with open(CSV_FILE, mode="w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=FIELD_NAMES)
-        writer.writeheader()
-        writer.writerows(data)
+    data.to_csv(CSV_FILE, index=False)
 
 # Tạo dữ liệu mới
 def create_data(data, new_entry):
-    data.append(new_entry)
+    data = data.append(new_entry, ignore_index=True)
     save_data(data)
 
 # Cập nhật dữ liệu
 def update_data(data, target_name, updated_entry):
-    record = next((item for item in data if item["Name"] == target_name), None)
-    if record:
-        record.update(updated_entry)
+    record_index = data[data["Name"] == target_name].index
+    if not record_index.empty:
+        data.loc[record_index[0]] = updated_entry
         save_data(data)
         return True
     return False
@@ -86,6 +83,6 @@ def update_data(data, target_name, updated_entry):
 # Xóa dữ liệu
 def delete_data(data, target_names):
     initial_count = len(data)
-    data[:] = [item for item in data if item["Name"] not in target_names]
+    data = data[~data["Name"].isin(target_names)]
     save_data(data)
     return len(data) < initial_count
