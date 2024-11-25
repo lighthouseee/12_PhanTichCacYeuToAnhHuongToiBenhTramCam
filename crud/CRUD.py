@@ -16,7 +16,7 @@ FIELD_NAMES = [
 
 # Đọc dữ liệu từ file CSV và đặt lại chỉ số bắt đầu từ 1
 def read_csv_data():
-     """
+    """
     Đọc dữ liệu từ file CSV và đặt chỉ số bắt đầu từ 1.
     :return: DataFrame với chỉ số bắt đầu từ 1
     """
@@ -24,6 +24,7 @@ def read_csv_data():
         return pd.read_csv(CSV_FILE)
     except FileNotFoundError:
         return pd.DataFrame(columns=FIELD_NAMES)
+
 
 def paginate_data(data, page_size):
     """

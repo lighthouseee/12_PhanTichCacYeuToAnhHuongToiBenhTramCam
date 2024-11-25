@@ -28,6 +28,17 @@ def display_columns(data):
         print(f"{idx}. {col}")
     return column_mapping
 
+def display_column_values(data, column):
+    """
+    Hiển thị các giá trị duy nhất trong cột và trả về mapping giữa số thứ tự và giá trị.
+    """
+    unique_values = sorted(data[column].dropna().unique())
+    value_mapping = {str(i + 1): val for i, val in enumerate(unique_values)}
+    print(f"\nCột '{column}' có các giá trị:")
+    for num, val in value_mapping.items():
+        print(f"{num}. {val}")
+    return value_mapping
+
 # Sắp xếp dữ liệu
 def sort_data(data):
     """
@@ -94,42 +105,64 @@ def search_data(data):
 # Lọc dữ liệu
 def filter_data(data):
     """
-    Lọc dữ liệu theo điều kiện và chỉ hiển thị cột Name cùng cột lọc.
+    Lọc dữ liệu theo điều kiện từ một hoặc nhiều cột.
     """
-    column_mapping = display_columns(data)
-    while True:
-        col_number = input("Nhập số thứ tự của cột muốn lọc: ").strip()
-        if col_number in column_mapping:
-            column = column_mapping[col_number]
-            break
-        else:
-            print("Lỗi: Số không hợp lệ. Vui lòng thử lại.")
-    
-    unique_values = data[column].dropna().unique()
-    unique_values_sorted = sorted(unique_values)
-    print(f"Giá trị khả dụng trong cột '{column}':")
-    for i, value in enumerate(unique_values_sorted, start=1):
-        print(f"{i}. {value}")
+    filtered_data = data.copy()  # Sao chép để giữ dữ liệu gốc
     
     while True:
-        condition = input(f"Nhập điều kiện lọc (ví dụ: '1' hoặc '> 25'): ").strip()
-        try:
-            if condition.isdigit() and int(condition) <= len(unique_values_sorted):
-                condition = f'== "{unique_values_sorted[int(condition)-1]}"'
+        print("\n--- BẮT ĐẦU LỌC ---")
+        print("Danh sách cột có thể lọc:")
+        column_mapping = {str(i + 1): col for i, col in enumerate(filtered_data.columns)}
+        for idx, col in column_mapping.items():
+            print(f"{idx}. {col}")
+        
+        # Chọn cột
+        while True:
+            selected_columns = input("Nhập số thứ tự của cột muốn lọc (có thể nhập nhiều, cách nhau bởi dấu cách): ").strip().split()
+            if all(col in column_mapping for col in selected_columns):
+                selected_columns = [column_mapping[col] for col in selected_columns]
+                break
+            else:
+                print("Lỗi: Có cột không hợp lệ. Vui lòng thử lại.")
+        
+        # Áp dụng lọc cho từng cột
+        for column in selected_columns:
+            value_mapping = display_column_values(filtered_data, column)
+            
+            if pd.api.types.is_numeric_dtype(filtered_data[column]):
+                # Lọc số với các toán tử
+                print(f"\nNhập điều kiện lọc cho cột '{column}' (ví dụ: > 50, <= 100, == 25):")
+                while True:
+                    condition = input("Điều kiện lọc: ").strip()
+                    try:
+                        # Kiểm tra áp dụng thử
+                        filtered_data.query(f"`{column}` {condition}")
+                        filtered_data = filtered_data.query(f"`{column}` {condition}")
+                        print(f"Đã áp dụng điều kiện lọc '{condition}' cho cột '{column}'.")
+                        break
+                    except Exception as e:
+                        print(f"Lỗi khi áp dụng điều kiện: {e}. Vui lòng nhập lại.")
+            
+            else:
+                # Lọc chữ với danh sách giá trị
+                print(f"\nChọn giá trị tương ứng trong cột '{column}' (có thể nhập nhiều, cách nhau bởi dấu cách):")
+                while True:
+                    selected_numbers = input("Nhập số thứ tự tương ứng: ").strip().split()
+                    if all(num in value_mapping for num in selected_numbers):
+                        selected_values = [value_mapping[num] for num in selected_numbers]
+                        filtered_data = filtered_data[filtered_data[column].isin(selected_values)]
+                        print(f"Đã áp dụng lọc với các giá trị: {selected_values}")
+                        break
+                    else:
+                        print("Lỗi: Có giá trị không hợp lệ. Vui lòng thử lại.")
+        
+        # Hỏi tiếp tục lọc hay dừng
+        choice = input("\nBạn có muốn tiếp tục lọc không? (y/n): ").strip().lower()
+        if choice != 'y':
+            print("Kết thúc quá trình lọc.")
             break
-        except Exception:
-            print("Điều kiện không hợp lệ. Vui lòng thử lại.")
     
-    try:
-        filtered_data = data.query(f"`{column}` {condition}")
-        if filtered_data.empty:
-            print("Không có dữ liệu nào thỏa mãn điều kiện.")
-        else:
-            print("Đã lọc thành công.")
-        return filtered_data[["Name", column]]
-    except Exception as e:
-        print(f"Lỗi khi áp dụng bộ lọc: {e}")
-        return pd.DataFrame()
+    return filtered_data
 
 # Lọc theo nguy cơ trầm cảm cao
 def filter_depression_risk(data):
