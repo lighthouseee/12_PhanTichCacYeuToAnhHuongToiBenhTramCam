@@ -1,4 +1,4 @@
-from crud.crud import read_csv_data, create_data, update_data, delete_data, paginate_data
+from crud.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data
 from tool.tool import sort_data, search_data, filter_data
 import pandas as pd
 
