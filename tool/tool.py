@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 # Đường dẫn file CSV
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -120,25 +121,31 @@ def filter_data(data):
         for column in selected_columns:
             print(f"\n--- Lọc dữ liệu trong cột '{column}' ---")
 
+            # Hiển thị giá trị khả dụng trong cột
+            unique_values = sorted(filtered_data[column].dropna().unique())
+            value_mapping = {str(i + 1): val for i, val in enumerate(unique_values)}
+            print(f"\nCột '{column}' có các giá trị khả dụng:")
+            for num, val in value_mapping.items():
+                print(f"{num}. {val}")
+
+            # Xử lý dữ liệu số và chuỗi
             if pd.api.types.is_numeric_dtype(filtered_data[column]):
-                # Xử lý dữ liệu số
-                print(f"\nNhập điều kiện lọc cho cột '{column}' (ví dụ: > 50, <= 100, == 25):")
                 while True:
-                    condition = input("Điều kiện: ").strip()
+                    input_value = input("Nhập điều kiện (>= 70 hoặc < 50): ").strip()
+                    # Nếu nhập số thứ tự
+                    if input_value.isdigit() and input_value in value_mapping:
+                        selected_value = value_mapping[input_value]
+                        filtered_data = filtered_data[filtered_data[column] == selected_value]
+                        print(f"Dữ liệu sau khi lọc cột '{column}' còn {len(filtered_data)} dòng.")
+                        break
+                    # Nếu nhập điều kiện
                     try:
-                        filtered_data = filtered_data.query(f"`{column}` {condition}")
+                        filtered_data = filtered_data.query(f"`{column}` {input_value}")
                         print(f"Dữ liệu sau khi lọc cột '{column}' còn {len(filtered_data)} dòng.")
                         break
                     except Exception as e:
                         print(f"Lỗi: Điều kiện không hợp lệ ({e}). Vui lòng nhập lại.")
             else:
-                # Xử lý dữ liệu chuỗi
-                unique_values = sorted(filtered_data[column].dropna().unique())
-                value_mapping = {str(i + 1): val for i, val in enumerate(unique_values)}
-                print(f"\nCột '{column}' có các giá trị khả dụng:")
-                for num, val in value_mapping.items():
-                    print(f"{num}. {val}")
-
                 print("\nNhập số tương ứng với giá trị cần lọc (có thể nhập nhiều, cách nhau bởi dấu cách):")
                 while True:
                     selected_numbers = input("Số thứ tự: ").strip().split()
@@ -159,8 +166,7 @@ def filter_data(data):
     # Chỉ hiển thị tên và các cột đã lọc
     display_columns = ['Name'] + selected_columns
     return filtered_data[display_columns]
-
-
+      
 # Hàm tìm kiếm dữ liệu
 def search_data(data):
     """
@@ -172,7 +178,7 @@ def search_data(data):
 
     while True:
         print("\n--- BẮT ĐẦU TÌM KIẾM ---")
-        column_mapping = display_column(filtered_data) 
+        column_mapping = display_column(filtered_data)  # Hiển thị danh sách cột
 
         # Chọn nhiều cột
         while True:
@@ -189,29 +195,39 @@ def search_data(data):
 
             # Hiển thị giá trị khả dụng trong cột
             unique_values = sorted(filtered_data[column].dropna().unique())
-            value_mapping = {str(i + 1): val for i, val in enumerate(unique_values)}
+            value_mapping = {str(i + 1): int(val) if isinstance(val, (np.integer, int)) else val for i, val in enumerate(unique_values)}
             print(f"Cột '{column}' có các giá trị khả dụng:")
             for num, val in value_mapping.items():
                 print(f"{num}. {val}")
 
-            print("\nNhập số tương ứng với các giá trị cần tìm kiếm (cách nhau bởi dấu cách):")
-            while True:
-                search_inputs = input("Số thứ tự: ").strip().split()
-
-                # Kiểm tra hợp lệ của các số thứ tự
-                if all(input_num in value_mapping for input_num in search_inputs):
-                    search_values = [value_mapping[input_num] for input_num in search_inputs]
-                    break
-                else:
-                    print("Lỗi: Có số thứ tự không hợp lệ. Vui lòng chọn lại từ danh sách.")
+            if pd.api.types.is_numeric_dtype(filtered_data[column]):
+                # Đối với dữ liệu số
+                while True:
+                    search_inputs = input("Nhập giá trị cần tìm kiếm (18 30 56 ...): ").strip().split()
+                    try:
+                        search_values = [type(unique_values[0])(val) for val in search_inputs]
+                        break
+                    except ValueError:
+                        print("Lỗi: Vui lòng nhập giá trị hợp lệ từ danh sách.")
+            else:
+                # Đối với dữ liệu chuỗi
+                print("\nNhập số tương ứng với giá trị cần tìm kiếm (có thể nhập nhiều, cách nhau bởi dấu cách): ")
+                while True:
+                    search_inputs = input("Nhập số thứ tự: ").strip().split()
+                    if all(input_num in value_mapping for input_num in search_inputs):
+                        search_values = [value_mapping[input_num] for input_num in search_inputs]
+                        break
+                    else:
+                        print("Lỗi: Có số thứ tự không hợp lệ. Vui lòng chọn lại từ danh sách.")
 
             # Lọc dữ liệu theo các giá trị đã chọn
             filtered_data = filtered_data[filtered_data[column].isin(search_values)]
             if filtered_data.empty:
                 print(f"Không tìm thấy giá trị nào trong cột '{column}' với các lựa chọn {search_values}.")
-                break
             else:
-                print(f"Tìm thấy {len(filtered_data)} dòng phù hợp với các giá trị {search_values} trong cột '{column}'.")
+                # Chuyển đổi kiểu dữ liệu để in rõ ràng
+                readable_values = [int(val) if isinstance(val, np.integer) else val for val in search_values]
+                print(f"Tìm thấy {len(filtered_data)} dòng phù hợp với các giá trị {readable_values} trong cột '{column}'.")
 
         # Hỏi người dùng có muốn tiếp tục tìm kiếm không
         choice = input("\nBạn có muốn tiếp tục tìm kiếm không? (y/n): ").strip().lower()
