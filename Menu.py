@@ -45,10 +45,12 @@ class DataApp:
         # Menu chức năng
         self.menu_frame = ttk.Frame(root)
         self.menu_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
-
+        
+        
         ttk.Button(self.menu_frame, text="Xem dữ liệu", command=self.view_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thêm dữ liệu", command=self.add_new_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Tìm kiếm dữ liệu", command=self.open_search_window).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Xóa dữ liệu", command=self.delete_selected_records).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
@@ -120,7 +122,61 @@ class DataApp:
         ttk.Button(action_window, text="Xóa", command=delete_record).pack(pady=5)
         ttk.Button(action_window, text="Hủy", command=action_window.destroy).pack(pady=5)
 
-        
+
+    def delete_selected_records(self):
+        """
+        Xóa các dòng đã chọn từ Treeview và cập nhật DataFrame.
+        """
+        selected_items = self.tree.selection()
+        if not selected_items:
+            messagebox.showerror("Lỗi", "Vui lòng chọn ít nhất một dòng để xóa.")
+            return
+
+        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa các dòng đã chọn?")
+        if confirm:
+            try:
+                # Lấy danh sách các chỉ số từ tags trong Treeview
+                indices = [int(self.tree.item(item)["tags"][0]) for item in selected_items]
+
+                # Gọi hàm delete_records từ CRUD.py
+                self.data = delete_records(self.data, indices)
+
+                # Cập nhật Treeview
+                self.update_treeview()
+
+                messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
+            except ValueError as e:
+                messagebox.showerror("Lỗi", str(e))
+                
+    def delete_records_in_search(self, results_tree):
+        """
+        Xóa các dòng được chọn trong cửa sổ tìm kiếm và cập nhật Treeview.
+        """
+        selected_items = results_tree.selection()
+        if not selected_items:
+            messagebox.showerror("Lỗi", "Vui lòng chọn ít nhất một dòng để xóa.")
+            return
+
+        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa các dòng đã chọn?")
+        if confirm:
+            try:
+                # Lấy danh sách các chỉ số từ tags trong Treeview
+                indices = [int(results_tree.item(item)["tags"][0]) for item in selected_items]
+
+                # Gọi hàm delete_records từ CRUD.py
+                self.data = delete_records(self.data, indices)
+
+                # Cập nhật Treeview chính và Treeview trong cửa sổ tìm kiếm
+                self.update_treeview()
+
+                for item in selected_items:
+                    results_tree.delete(item)
+
+                messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
+            except ValueError as e:
+                messagebox.showerror("Lỗi", str(e))
+
+
     def view_data(self):
         """
         Hiển thị dữ liệu trong Treeview dựa trên số dòng mỗi trang.
@@ -156,6 +212,8 @@ class DataApp:
     def create_treeview_with_scrollbars(self, parent_frame, columns, height=15):
         tree_frame = ttk.Frame(parent_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True)
+        
+        tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height, selectmode="extended")
 
         tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
         for col in columns:
@@ -293,7 +351,7 @@ class DataApp:
 
         search_window = tk.Toplevel(self.root)
         search_window.title("Tìm kiếm dữ liệu")
-        search_window.geometry("800x500")
+        search_window.geometry("800x600")
 
         ttk.Label(search_window, text="Chọn cột để tìm kiếm:").pack(pady=5)
         column_combobox = ttk.Combobox(search_window, values=list(self.data.columns), state="readonly")
@@ -305,8 +363,17 @@ class DataApp:
 
         ttk.Button(search_window, text="Tìm kiếm", command=perform_search).pack(pady=10)
 
-        results_tree, _, _ = self.create_treeview_with_scrollbars(search_window, list(self.data.columns), height=15)
+        # Tạo Treeview với thanh cuộn
+        results_tree, _, _ = self.create_treeview_with_scrollbars(
+            parent_frame=search_window, 
+            columns=list(self.data.columns), 
+            height=15
+        )
+
         results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
+        # Thêm nút "Xóa" để xóa các dòng đã chọn
+        ttk.Button(search_window, text="Xóa dữ liệu", command=lambda: self.delete_records_in_search(results_tree)).pack(pady=10)
+        
 
     def prev_page(self):
         if self.current_page > 1:
