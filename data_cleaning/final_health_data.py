@@ -32,34 +32,12 @@ def describe_valid_values(df):
             if col == 'Age':
                 print(f"  Kiểu dữ liệu hợp lệ: Số nguyên trong khoảng từ 18 đến 80")
             elif col == 'Income':
-                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên hoặc số thực, giá trị không âm")
-            elif col == 'Physical Activity Level':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Sedentary', 'Moderate', 'Active'")
-            elif col == 'Smoking Status':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Current', 'Non-smoker', 'Former'")
-            elif col == 'History of Mental Illness':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Yes', 'No'")
-            elif col == 'Chronic Medical Conditions':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Yes', 'No'")
-            elif col == 'Sleep Patterns':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Poor', 'Good', 'Fair'")
-            elif col == 'Alcohol Consumption':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Low', 'Moderate', 'High'")
-            elif col == 'Dietary Habits':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Healthy', 'Moderate', 'Unhealthy'")
-            elif col == 'Employment Status':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Employed', 'Unemployed'")
-            elif col == 'Family History of Depression':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Yes', 'No'")
-            elif col == 'History of Substance Abuse':
-                print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Yes', 'No'")
-            else:
-                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên")
+                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên hoặc số thực không âm")
+            else: # Số lượng con cái
+                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên không âm")
         else:
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
-        print("\n")
-
 # Gọi hàm mô tả các giá trị hợp lệ
 describe_valid_values(data)
 
@@ -77,86 +55,38 @@ def detect_outliers(df):
     """
     issues = {}
     
-    # Kiểm tra tuổi (Age)
-    if (df['Age'] < 18).any() or (df['Age'] > 80).any():
-        issues['Age'] = "Tuổi bất hợp lệ (bé hơn 18 hoặc lớn hơn 80)."
+    # Định nghĩa các điều kiện kiểm tra cho mỗi cột
+    check_conditions = {
+        'Age': lambda x: (x < 18) | (x > 80),
+        'Income': lambda x: x < 0,
+        'Number of Children': lambda x: x < 0,
+        'Physical Activity Level': lambda x: ~x.isin(['Sedentary', 'Moderate', 'Active']),
+        'Smoking Status': lambda x: ~x.isin(['Non-smoker', 'Former', 'Current']),
+        'Employment Status': lambda x: ~x.isin(['Employed', 'Unemployed']),
+        'Alcohol Consumption': lambda x: ~x.isin(['Low', 'Moderate', 'High']),
+        'Dietary Habits': lambda x: ~x.isin(['Healthy', 'Moderate', 'Unhealthy']),
+        'Sleep Patterns': lambda x: ~x.isin(['Poor', 'Good', 'Fair']),
+        'History of Mental Illness': lambda x: ~x.isin(['Yes', 'No']),
+        'History of Substance Abuse': lambda x: ~x.isin(['Yes', 'No']),
+        'Family History of Depression': lambda x: ~x.isin(['Yes', 'No']),
+        'Chronic Medical Conditions': lambda x: ~x.isin(['Yes', 'No']),
+        'Marital Status': lambda x: ~x.isin(['Single', 'Married', 'Divorced', 'Widowed']),
+        'Education Level': lambda x: ~x.isin(['High School', 'Bachelor\'s Degree', 'Master\'s Degree', 'Associate Degree', 'PhD'])
+    }
     
-    # Kiểm tra thu nhập (Income)
-    if (df['Income'] < 0).any():
-        issues['Income'] = "Thu nhập âm."
-    
-    # Kiểm tra mức độ hoạt động thể chất (Physical Activity Level)
-    valid_physical_activity_levels = ['Sedentary', 'Moderate', 'Active']
-    if not df['Physical Activity Level'].isin(valid_physical_activity_levels).all():
-        issues['Physical Activity Level'] = "Mức độ hoạt động thể chất không hợp lệ."
-    
-    # Kiểm tra tình trạng hút thuốc (Smoking Status)
-    valid_smoking_status = ['Non-smoker', 'Former', 'Current']
-    if not df['Smoking Status'].isin(valid_smoking_status).all():
-        issues['Smoking Status'] = "Tình trạng hút thuốc không hợp lệ."
-    
-    # Kiểm tra tình trạng việc làm (Employment Status)
-    valid_employment_status = ['Employed', 'Unemployed']
-    if not df['Employment Status'].isin(valid_employment_status).all():
-        issues['Employment Status'] = "Tình trạng việc làm không hợp lệ."
-    
-    # Kiểm tra thói quen uống rượu bia (Alcohol Consumption)
-    valid_alcohol_consumption = ['Low', 'Moderate', 'High']
-    if not df['Alcohol Consumption'].isin(valid_alcohol_consumption).all():
-        issues['Alcohol Consumption'] = "Thói quen uống rượu bia không hợp lệ."
-    
-    # Kiểm tra thói quen ăn uống (Dietary Habits)
-    valid_dietary_habits = ['Healthy', 'Moderate', 'Unhealthy']
-    if not df['Dietary Habits'].isin(valid_dietary_habits).all():
-        issues['Dietary Habits'] = "Thói quen ăn uống không hợp lệ."
-    
-    # Kiểm tra thói quen ngủ (Sleep Patterns)
-    valid_sleep_patterns = ['Poor', 'Good', 'Fair']
-    if not df['Sleep Patterns'].isin(valid_sleep_patterns).all():
-        issues['Sleep Patterns'] = "Thói quen ngủ không hợp lệ."
-    
-    # Kiểm tra tiền sử bệnh tâm lý (History of Mental Illness)
-    valid_history_of_mental_illness = ['Yes', 'No']
-    if not df['History of Mental Illness'].isin(valid_history_of_mental_illness).all():
-        issues['History of Mental Illness'] = "Tiền sử bệnh tâm lý không hợp lệ."
-    
-    # Kiểm tra tiền sử lạm dụng chất kích thích (History of Substance Abuse)
-    valid_history_of_substance_abuse = ['Yes', 'No']
-    if not df['History of Substance Abuse'].isin(valid_history_of_substance_abuse).all():
-        issues['History of Substance Abuse'] = "Tiền sử lạm dụng chất kích thích không hợp lệ."
-    
-    # Kiểm tra tiền sử gia đình bị trầm cảm (Family History of Depression)
-    valid_family_history_of_depression = ['Yes', 'No']
-    if not df['Family History of Depression'].isin(valid_family_history_of_depression).all():
-        issues['Family History of Depression'] = "Tiền sử gia đình bị trầm cảm không hợp lệ."
-    
-    # Kiểm tra bệnh lý mãn tính (Chronic Medical Conditions)
-    valid_chronic_medical_conditions = ['Yes', 'No']
-    if not df['Chronic Medical Conditions'].isin(valid_chronic_medical_conditions).all():
-        issues['Chronic Medical Conditions'] = "Bệnh lý mãn tính không hợp lệ."
-    
-    # Kiểm tra tình trạng hôn nhân (Marital Status)
-    valid_marital_status = ['Single', 'Married', 'Divorced', 'Widowed']
-    if not df['Marital Status'].isin(valid_marital_status).all():
-        issues['Marital Status'] = "Tình trạng hôn nhân không hợp lệ."
-    
-    # Kiểm tra trình độ học vấn (Education Level)
-    valid_education_level = ['High School', 'Bachelor\'s Degree', 'Master\'s Degree', 'Associate Degree', 'PhD']
-    if not df['Education Level'].isin(valid_education_level).all():
-        issues['Education Level'] = "Trình độ học vấn không hợp lệ."
-    
-    # Kiểm tra số lượng con cái (Number of Children)
-    if (df['Number of Children'] < 0).any():
-        issues['Number of Children'] = "Số lượng con cái không hợp lệ (số âm)."
+    # Duyệt qua từng cột và kiểm tra điều kiện
+    for col, condition in check_conditions.items():
+        if condition(df[col]).any():
+            issues[col] = f"{col} có giá trị bất thường."
     
     return issues
 
 outliers = detect_outliers(data)
-print("\nCác vấn đề bất thường:\n", outliers)
+print("\nCác vấn đề bất thường:", outliers)
 
 # 2. Kiểm tra dữ liệu thiếu (missing values)
 missing_values = data.isnull().sum()
-print("\nSố lượng giá trị thiếu trong từng cột:\n", missing_values)
+print("Số lượng giá trị thiếu trong từng cột:\n", missing_values)
 
 # ----- Bước 2: Làm sạch dữ liệu -----
 
@@ -201,14 +131,29 @@ data = data[data['Number of Children'] >= 0]  # Số lượng con cái không â
 
 # 3. Điền giá trị thiếu
 for col in data.columns:
-    if data[col].dtype in ['int64', 'float64']:
-        data[col].fillna(data[col].mean())
-    else:
-        if col in ['History of Mental Illness', 'History of Substance Abuse',
-                   'Family History of Depression', 'Chronic Medical Conditions']:
+    if data[col].dtype in ['int64', 'float64']:  # Xử lý các cột số
+        if col == 'Age':
+            # Điền giá trị thiếu trong cột "Age" bằng giá trị trung bình của cột
+            data[col].fillna(data[col].mean())
+        elif col == 'Income':
+            # Điền giá trị thiếu trong cột "Income" bằng giá trị trung bình của cột
+            data[col].fillna(data[col].mean())
+        elif col == 'Number of Children':
+            # Điền giá trị thiếu trong cột "Number of Children"
+            # Nếu tuổi < 18 thì điền 0, nếu tuổi >= 18 thì điền 1
+            data[col] = data.apply(lambda row: 0 if row['Age'] < 18 else 1 if pd.isna(row[col]) else row[col], axis=1)
+        else:
+            # Điền giá trị thiếu cho các cột số khác (nếu có)
+            data[col].fillna(data[col].mean())
+    
+    else:  # Xử lý các cột chuỗi
+        if col in ['History of Mental Illness', 'History of Substance Abuse', 'Family History of Depression', 'Chronic Medical Conditions']:
+            # Nếu là các cột này, điền 'No'
             data[col].fillna('No')
         else:
-            data[col].fillna('Unknown')
+            # Còn lại điền ngẫu nhiên các giá trị khả dụng trong cột đó
+            valid_values = data[col].dropna().unique()  # Lấy các giá trị không thiếu trong cột
+            data[col] = data.apply(lambda row: np.random.choice(valid_values) if pd.isna(row[col]) else row[col], axis=1)
 
 # ----- Bước 3: Phát sinh dữ liệu mới -----
 # Tạo cột "Depression Risk" - Đây là cột dự đoán xem một người có khả năng dẫn đến trầm cảm hay không dựa trên các điều kiện khách quan
@@ -322,9 +267,6 @@ def predict_depression_risk(row):
 # Áp dụng hàm dự đoán mức độ trầm cảm vào từng dòng dữ liệu
 data['Depression Risk'] = data.apply(predict_depression_risk, axis=1)
 
-# Kiểm tra kiểu dữ liệu của từng cột
-print("Kiểu dữ liệu của từng cột trong dữ liệu sau khi thêm cột 'Depression Risk':\n")
-print(data.dtypes)
 # ----- Kết quả -----
 # Thông tin sau khi làm sạch và thêm cột "Depression Risk"
 print("\nDữ liệu sau khi làm sạch và thêm cột Depression Risk:\n")
