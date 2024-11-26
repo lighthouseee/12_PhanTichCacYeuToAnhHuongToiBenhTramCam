@@ -1,8 +1,13 @@
+<<<<<<< Updated upstream:CRUD/CRUD.py
 import csv
+=======
+import pandas as pd
+import math
+>>>>>>> Stashed changes:crud/CRUD.py
 
-# Đường dẫn file CSV
 CSV_FILE = "cleaned_and_predicted_data.csv"
 
+<<<<<<< Updated upstream:CRUD/CRUD.py
 # Định nghĩa các cột
 FIELD_NAMES = [
     "Name", "Age", "Marital Status", "Education Level", "Number of Children", 
@@ -14,23 +19,41 @@ FIELD_NAMES = [
 
 # Đọc dữ liệu từ file CSV
 def read_csv_data():
+=======
+def read_csv_data():
+    """
+    Đọc dữ liệu từ file CSV và trả về DataFrame.
+    """
+>>>>>>> Stashed changes:crud/CRUD.py
     try:
         with open(CSV_FILE, mode="r", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             return [dict(row) for row in reader]
     except FileNotFoundError:
+<<<<<<< Updated upstream:CRUD/CRUD.py
         return []
 
 def paginate_data(data, page_size):
-    """
-    Phân trang dữ liệu và xử lý điều hướng giữa các trang.
-    :param data: DataFrame
-    :param page_size: Số dòng mỗi trang
-    """
-    total_pages = (len(data) + page_size - 1) // page_size  # Tính tổng số trang
-    current_page = 1
-    line_width = 175
+=======
+        return pd.DataFrame()
 
+def paginate_data(data, page_size, current_page):
+>>>>>>> Stashed changes:crud/CRUD.py
+    """
+    Phân trang dữ liệu.
+    :param data: DataFrame hiện tại
+    :param page_size: Số dòng mỗi trang
+    :param current_page: Trang hiện tại
+    :return: DataFrame của trang hiện tại và tổng số trang
+    """
+    total_pages = math.ceil(len(data) / page_size)
+    if current_page < 1 or current_page > total_pages:
+        raise ValueError("Trang không hợp lệ.")
+    start_idx = (current_page - 1) * page_size
+    end_idx = start_idx + page_size
+    return data.iloc[start_idx:end_idx], total_pages
+
+<<<<<<< Updated upstream:CRUD/CRUD.py
     while True:
         # Lấy dữ liệu của trang hiện tại
         start_idx = (current_page - 1) * page_size
@@ -89,3 +112,44 @@ def delete_data(data, target_names):
     data[:] = [item for item in data if item["Name"] not in target_names]
     save_data(data)
     return len(data) < initial_count
+=======
+def create_data(data, new_entry):
+    """
+    Thêm một bản ghi mới vào DataFrame và lưu vào CSV.
+    :param data: DataFrame hiện tại
+    :param new_entry: Dữ liệu mới dạng dictionary
+    :return: DataFrame đã cập nhật
+    """
+    # Tạo DataFrame từ bản ghi mới
+    new_data = pd.DataFrame([new_entry])
+
+    # Thêm bản ghi mới vào file CSV (append mode)
+    new_data.to_csv(CSV_FILE, mode='a', index=False, header=False)
+
+    # Cập nhật DataFrame hiện tại
+    updated_data = pd.concat([data, new_data], ignore_index=True)
+    return updated_data
+
+def update_data(data, target_name, updated_entry):
+    """
+    Cập nhật dữ liệu của một bản ghi cụ thể dựa trên tên.
+    :param data: DataFrame hiện tại
+    :param target_name: Giá trị Name của bản ghi cần cập nhật
+    :param updated_entry: Dữ liệu cập nhật dưới dạng dictionary
+    :return: True nếu cập nhật thành công, False nếu không tìm thấy bản ghi
+    """
+    # Tìm chỉ số của bản ghi cần cập nhật
+    record_index = data.index[data["Name"] == target_name]
+
+    # Nếu tìm thấy bản ghi
+    if not record_index.empty:
+        for col, value in updated_entry.items():
+            data.at[record_index[0], col] = value  # Cập nhật giá trị mới cho từng cột
+
+        # Lưu dữ liệu đã cập nhật vào file CSV
+        data.to_csv(CSV_FILE, index=False)
+        return True
+
+    # Nếu không tìm thấy bản ghi
+    return False
+>>>>>>> Stashed changes:crud/CRUD.py
