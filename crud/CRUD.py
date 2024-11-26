@@ -21,16 +21,10 @@ def read_csv_data():
     :return: DataFrame với chỉ số bắt đầu từ 1
     """
     try:
-        data = pd.read_csv(CSV_FILE)
-        data.index = data.index + 1  # Đặt lại chỉ số bắt đầu từ 1
-        print(f"Đã đọc thành công dữ liệu từ file '{CSV_FILE}' với chỉ số bắt đầu từ 1.")
-        return data
+        return pd.read_csv(CSV_FILE)
     except FileNotFoundError:
-        print(f"Lỗi: File '{CSV_FILE}' không tồn tại.")
         return pd.DataFrame(columns=FIELD_NAMES)
-    except Exception as e:
-        print(f"Lỗi khi đọc file: {e}")
-        return pd.DataFrame(columns=FIELD_NAMES)
+
 
 def paginate_data(data, page_size):
     """
@@ -47,16 +41,13 @@ def paginate_data(data, page_size):
         start_idx = (current_page - 1) * page_size
         end_idx = start_idx + page_size
         paginated_data = data.iloc[start_idx:end_idx]
-
         # Hiển thị dữ liệu
         print(paginated_data)
-        
         # Canh giữa cho số trang
         page_info = f"Trang {current_page}/{total_pages}"
         padding = (line_width - len(page_info)) // 2
         print("\n" + " " * padding + page_info + " " * padding + "\n")
         print(" " * line_width)
-
         # Điều hướng giữa các trang
         if total_pages > 1:
             action = input("Nhập 'n' để sang trang, 'p' để quay lại, hoặc 'q' để thoát: ").strip().lower()
@@ -72,16 +63,13 @@ def paginate_data(data, page_size):
         else:
             print("Không có thêm trang nào.")
             break
-
 # Lưu dữ liệu vào file CSV
 def save_data(data):
     data.to_csv(CSV_FILE, index=False)
-
 # Tạo dữ liệu mới
 def create_data(data, new_entry):
     data = data.append(new_entry, ignore_index=True)
     save_data(data)
-
 # Cập nhật dữ liệu
 def update_data(data, target_name, updated_entry):
     # Tìm chỉ số của bản ghi có tên trùng với `target_name`
@@ -96,12 +84,9 @@ def update_data(data, target_name, updated_entry):
         return True
     return False
 
-
 # Xóa dữ liệu
 def delete_data(data, target_names):
     initial_count = len(data)
     data = data[~data["Name"].isin(target_names)]
     save_data(data)
     return len(data) < initial_count
-
-
