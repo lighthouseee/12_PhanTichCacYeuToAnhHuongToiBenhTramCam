@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from crud.CRUD import read_csv_data, paginate_data, create_data, update_data, delete_records
+from tool.tool import sort_data, filter_data
 import pandas as pd
 
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -27,8 +28,11 @@ class DataApp:
         self.root = root
         self.root.title("Quản lý dữ liệu")
         self.root.geometry("1200x600")
-
-        self.data = read_csv_data()
+        
+        self.original_data = read_csv_data()  # Dữ liệu gốc
+        self.data = self.original_data.copy()  # Dữ liệu hiện tại (có thể bị lọc)
+        
+        # self.data = read_csv_data()
         self.current_page = 1
         self.page_size = 10
         self.total_pages = 1
@@ -51,6 +55,9 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Thêm dữ liệu", command=self.add_new_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Tìm kiếm dữ liệu", command=self.open_search_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Xóa dữ liệu", command=self.delete_selected_records).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Sắp xếp", command=self.open_sort_window).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear_filter).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
@@ -374,6 +381,78 @@ class DataApp:
         # Thêm nút "Xóa" để xóa các dòng đã chọn
         ttk.Button(search_window, text="Xóa dữ liệu", command=lambda: self.delete_records_in_search(results_tree)).pack(pady=10)
         
+    def open_filter_window(self):
+        """Mở cửa sổ lọc dữ liệu."""
+        def perform_filter():
+            """
+            Lọc dữ liệu trong Treeview dựa trên cột và giá trị người dùng nhập.
+            """
+            column = column_combobox.get()
+            value = value_entry.get().strip()
+            if not column or not value:
+                messagebox.showerror("Lỗi", "Vui lòng chọn cột và nhập giá trị cần lọc.")
+                return
+            try:
+                # Sử dụng hàm filter_data để lọc
+                self.data = filter_data(self.data, column, value)
+                self.current_page = 1
+                self.update_treeview()  # Cập nhật Treeview với dữ liệu mới
+            except ValueError as e:
+                messagebox.showerror("Lỗi", str(e))
+
+
+        filter_window = tk.Toplevel(self.root)
+        filter_window.title("Lọc dữ liệu")
+        filter_window.geometry("300x200")
+
+        ttk.Label(filter_window, text="Chọn cột:").pack(pady=5)
+        column_combobox = ttk.Combobox(filter_window, values=list(self.data.columns), state="readonly")
+        column_combobox.pack(pady=5)
+
+        ttk.Label(filter_window, text="Nhập giá trị:").pack(pady=5)
+        value_entry = ttk.Entry(filter_window)
+        value_entry.pack(pady=5)
+
+        ttk.Button(filter_window, text="Lọc", command=perform_filter).pack(pady=10)
+
+    def open_sort_window(self):
+        """Mở cửa sổ sắp xếp dữ liệu."""
+        def perform_sort():
+            column = column_combobox.get()
+            order = order_combobox.get()
+            ascending = True if order == "Tăng dần" else False
+
+            if not column:
+                messagebox.showerror("Lỗi", "Vui lòng chọn cột để sắp xếp.")
+                return
+            
+            self.data = sort_data(self.data, column, ascending)
+            self.update_treeview()
+            sort_window.destroy()
+            messagebox.showinfo("Thành công", f"Dữ liệu đã được sắp xếp theo '{column}' ({order}).")
+
+        sort_window = tk.Toplevel(self.root)
+        sort_window.title("Sắp xếp dữ liệu")
+        sort_window.geometry("300x200")
+
+        ttk.Label(sort_window, text="Chọn cột:").pack(pady=5)
+        column_combobox = ttk.Combobox(sort_window, values=list(self.data.columns), state="readonly")
+        column_combobox.pack(pady=5)
+
+        ttk.Label(sort_window, text="Thứ tự:").pack(pady=5)
+        order_combobox = ttk.Combobox(sort_window, values=["Tăng dần", "Giảm dần"], state="readonly")
+        order_combobox.pack(pady=5)
+
+        ttk.Button(sort_window, text="Sắp xếp", command=perform_sort).pack(pady=10)
+
+    def clear_filter(self):
+        """
+        Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc).
+        """
+        self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
+        self.current_page = 1  # Quay lại trang đầu tiên
+        self.update_treeview()
+        messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
 
     def prev_page(self):
         if self.current_page > 1:
