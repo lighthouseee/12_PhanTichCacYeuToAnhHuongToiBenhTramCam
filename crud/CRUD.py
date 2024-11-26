@@ -84,12 +84,18 @@ def create_data(data, new_entry):
 
 # Cập nhật dữ liệu
 def update_data(data, target_name, updated_entry):
-    record_index = data[data["Name"] == target_name].index
+    # Tìm chỉ số của bản ghi có tên trùng với `target_name`
+    record_index = data.index[data["Name"] == target_name]
+    
+    # Kiểm tra nếu bản ghi tồn tại
     if not record_index.empty:
-        data.loc[record_index[0]] = updated_entry
-        save_data(data)
+        # Cập nhật các giá trị trong bản ghi
+        for col, value in updated_entry.items():
+            data.at[record_index[0], col] = value
+        save_data(data)  # Lưu lại sau khi cập nhật
         return True
     return False
+
 
 # Xóa dữ liệu
 def delete_data(data, target_names):

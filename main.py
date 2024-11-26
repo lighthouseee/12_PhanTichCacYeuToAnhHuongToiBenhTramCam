@@ -1,4 +1,4 @@
-from crud.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data
+from crud.CRUD import read_csv_data, create_data, update_data, delete_data, paginate_data, save_data
 from tool.tool import sort_data, search_data, filter_data
 import pandas as pd
 
@@ -28,14 +28,20 @@ def main():
             create_data(data.to_dict("records"), new_entry)
             print("Thêm dữ liệu thành công!")
 
-        elif choice == "3": # Cập nhật dữ liệu
+        elif choice == "3":  # Cập nhật dữ liệu
             target_name = input("Nhập tên cần cập nhật: ").strip()
-            updated_entry = {col: input(f"Nhập {col} mới (hoặc Enter để bỏ qua): ").strip() for col in data.columns}
+            updated_entry = {
+                col: input(f"Nhập {col} mới (hoặc Enter để bỏ qua): ").strip()
+                for col in data.columns
+            }
+            # Bỏ qua các trường không được cập nhật
             updated_entry = {k: v for k, v in updated_entry.items() if v}
-            if update_data(data.to_dict("records"), target_name, updated_entry):
+    
+            if update_data(data, target_name, updated_entry):  # Truyền trực tiếp DataFrame
                 print("Cập nhật thành công!")
             else:
                 print("Không tìm thấy dữ liệu!")
+
 
         elif choice == "4": # Xóa dữ liệu 
             target_names = input("Nhập tên cần xóa (phân cách bằng dấu phẩy): ").split(", ")
