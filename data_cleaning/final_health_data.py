@@ -30,7 +30,7 @@ def describe_valid_values(df):
         elif df[col].dtype in ['int64', 'float64']:
             # Các cột kiểu số
             if col == 'Age':
-                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên trong khoảng từ 0 đến 120")
+                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên trong khoảng từ 18 đến 80")
             elif col == 'Income':
                 print(f"  Kiểu dữ liệu hợp lệ: Số nguyên hoặc số thực, giá trị không âm")
             elif col == 'Physical Activity Level':
@@ -54,7 +54,7 @@ def describe_valid_values(df):
             elif col == 'History of Substance Abuse':
                 print(f"  Kiểu dữ liệu hợp lệ: Chuỗi với các giá trị có thể là: 'Yes', 'No'")
             else:
-                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên hoặc số thực")
+                print(f"  Kiểu dữ liệu hợp lệ: Số nguyên")
         else:
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
@@ -78,8 +78,8 @@ def detect_outliers(df):
     issues = {}
     
     # Kiểm tra tuổi (Age)
-    if (df['Age'] < 0).any() or (df['Age'] > 120).any():
-        issues['Age'] = "Tuổi bất hợp lệ (âm hoặc lớn hơn 120)."
+    if (df['Age'] < 18).any() or (df['Age'] > 80).any():
+        issues['Age'] = "Tuổi bất hợp lệ (bé hơn 18 hoặc lớn hơn 80)."
     
     # Kiểm tra thu nhập (Income)
     if (df['Income'] < 0).any():
@@ -161,7 +161,7 @@ print("\nSố lượng giá trị thiếu trong từng cột:\n", missing_values
 # ----- Bước 2: Làm sạch dữ liệu -----
 
 # 1. Loại bỏ giá trị bất thường
-data = data[(data['Age'] >= 0) & (data['Age'] <= 120)]  # Tuổi trong khoảng 0-120
+data = data[(data['Age'] >= 18) & (data['Age'] <= 80)]  # Tuổi trong khoảng 18-120
 data = data[data['Income'] >= 0]  # Thu nhập không âm
 
 valid_physical_activity_levels = ['Sedentary', 'Moderate', 'Active']
@@ -197,7 +197,7 @@ data = data[data['Marital Status'].isin(valid_marital_status)]
 valid_education_level = ['High School', "Bachelor's Degree", "Master's Degree", 'Associate Degree', 'PhD']
 data = data[data['Education Level'].isin(valid_education_level)]
 
-data = data[data['Number of Children'] >= 0]  # Không có số lượng con cái âm
+data = data[data['Number of Children'] >= 0]  # Số lượng con cái không âm
 
 # 3. Điền giá trị thiếu
 for col in data.columns:
@@ -328,7 +328,7 @@ print(data.dtypes)
 # ----- Kết quả -----
 # Thông tin sau khi làm sạch và thêm cột "Depression Risk"
 print("\nDữ liệu sau khi làm sạch và thêm cột Depression Risk:\n")
-print(data[['Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'History of Mental Illness', 'Chronic Medical Conditions', 'Sleep Patterns', 'Depression Risk']].head())
+print(data[['Name','Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'History of Mental Illness', 'Chronic Medical Conditions', 'Sleep Patterns', 'Depression Risk']].head())
 
 # Lưu dữ liệu đã làm sạch vào file mới
 output_path = 'cleaned_and_predicted_data.csv'
@@ -336,6 +336,4 @@ output_path = 'cleaned_and_predicted_data.csv'
 data.to_csv(output_path, index=False)
 print(f"\nDữ liệu đã được lưu vào file '{output_path}'.")
 
-# Đọc lại dữ liệu từ file mới
-data_cleaned = pd.read_csv(output_path)
 
