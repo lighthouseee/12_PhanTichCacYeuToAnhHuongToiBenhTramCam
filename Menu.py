@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from crud.CRUD import read_csv_data, paginate_data, create_data, update_data
+from crud.CRUD import read_csv_data, paginate_data, create_data, update_data, delete_records
 import pandas as pd
 
 CSV_FILE = "cleaned_and_predicted_data.csv"
@@ -104,18 +104,16 @@ class DataApp:
             confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa dữ liệu này?")
             if confirm:
                 try:
-                    # Xóa dòng khỏi DataFrame
-                    self.data = self.data.drop(record_index).reset_index(drop=True)
-                    
-                    # Cập nhật lại file CSV
-                    self.data.to_csv(CSV_FILE, index=False)
+                    # Gọi hàm delete_records từ CRUD
+                    self.data = delete_records(self.data, [record_index])
 
                     # Cập nhật Treeview
                     self.update_treeview()
 
                     messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
-                except Exception as e:
-                    messagebox.showerror("Lỗi", f"Đã xảy ra lỗi khi xóa dữ liệu: {e}")
+                except ValueError as e:
+                    messagebox.showerror("Lỗi", str(e))
+
 
 
         ttk.Button(action_window, text="Cập nhật", command=update_record).pack(pady=5)
