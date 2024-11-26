@@ -72,19 +72,57 @@ class DataApp:
         """
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showerror("Lỗi", "Vui lòng chọn một dòng để cập nhật.")
+            messagebox.showerror("Lỗi", "Vui lòng chọn một dòng để thao tác.")
             return
 
         # Lấy chỉ số của dòng được chọn
         record_index = int(self.tree.item(selected_item)["tags"][0])
+
+        # Hiển thị cửa sổ xác nhận
+        action_window = tk.Toplevel(self.root)
+        action_window.title("Chọn hành động")
+        action_window.geometry("300x150")
+
+        ttk.Label(action_window, text="Bạn muốn thực hiện hành động nào?").pack(pady=10)
+
+        def update_record():
+            """
+            Gọi hàm cập nhật dữ liệu.
+            """
+            action_window.destroy()
+            self.open_input_window(
+                title="Cập nhật dữ liệu",
+                action_callback=lambda updated_data: self.handle_update_data(record_index, updated_data),
+                record_data=self.data.loc[record_index].to_dict()
+            )
+
+        def delete_record():
+            """
+            Xóa dòng đã chọn và cập nhật file CSV.
+            """
+            action_window.destroy()
+            confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa dữ liệu này?")
+            if confirm:
+                try:
+                    # Xóa dòng khỏi DataFrame
+                    self.data = self.data.drop(record_index).reset_index(drop=True)
+                    
+                    # Cập nhật lại file CSV
+                    self.data.to_csv(CSV_FILE, index=False)
+
+                    # Cập nhật Treeview
+                    self.update_treeview()
+
+                    messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
+                except Exception as e:
+                    messagebox.showerror("Lỗi", f"Đã xảy ra lỗi khi xóa dữ liệu: {e}")
+
+
+        ttk.Button(action_window, text="Cập nhật", command=update_record).pack(pady=5)
+        ttk.Button(action_window, text="Xóa", command=delete_record).pack(pady=5)
+        ttk.Button(action_window, text="Hủy", command=action_window.destroy).pack(pady=5)
+
         
-        # Mở cửa sổ cập nhật cho dòng được chọn
-        self.open_input_window(
-            title="Cập nhật dữ liệu",
-            action_callback=lambda updated_data: self.handle_update_data(record_index, updated_data),
-            record_data=self.data.loc[record_index].to_dict()
-        )
-    
     def view_data(self):
         """
         Hiển thị dữ liệu trong Treeview dựa trên số dòng mỗi trang.
@@ -241,12 +279,9 @@ class DataApp:
 
     def open_search_window(self):
         """
-        Mở cửa sổ tìm kiếm và tích hợp chức năng nhấp đúp để cập nhật dữ liệu.
+        Mở cửa sổ tìm kiếm để người dùng tìm theo bất kỳ cột nào.
         """
         def perform_search():
-            """
-            Thực hiện tìm kiếm và hiển thị kết quả trong Treeview.
-            """
             column = column_combobox.get()
             value = value_entry.get().strip()
             if not column or not value:
@@ -258,26 +293,6 @@ class DataApp:
             for idx, row in results.iterrows():
                 results_tree.insert("", tk.END, values=list(row), tags=(idx,))
 
-        def on_double_click(event):
-            """
-            Xử lý sự kiện nhấp đúp vào một hàng trong Treeview kết quả.
-            """
-            selected_item = results_tree.selection()
-            if not selected_item:
-                messagebox.showerror("Lỗi", "Vui lòng chọn một dòng để cập nhật.")
-                return
-
-            # Lấy chỉ số của dòng được chọn
-            record_index = int(results_tree.item(selected_item)["tags"][0])
-
-            # Mở cửa sổ cập nhật
-            self.open_input_window(
-                title="Cập nhật dữ liệu",
-                action_callback=lambda updated_data: self.handle_update_data(record_index, updated_data),
-                record_data=self.data.loc[record_index].to_dict()
-            )
-
-        # Cửa sổ tìm kiếm
         search_window = tk.Toplevel(self.root)
         search_window.title("Tìm kiếm dữ liệu")
         search_window.geometry("800x500")
@@ -292,15 +307,8 @@ class DataApp:
 
         ttk.Button(search_window, text="Tìm kiếm", command=perform_search).pack(pady=10)
 
-        # Tạo Treeview để hiển thị kết quả tìm kiếm
-        results_tree, _, _ = self.create_treeview_with_scrollbars(
-            parent_frame=search_window,
-            columns=list(self.data.columns),
-            height=15
-        )
-
-        # Gắn sự kiện nhấp đúp vào Treeview
-        results_tree.bind("<Double-1>", on_double_click)
+        results_tree, _, _ = self.create_treeview_with_scrollbars(search_window, list(self.data.columns), height=15)
+        results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
 
     def prev_page(self):
         if self.current_page > 1:
