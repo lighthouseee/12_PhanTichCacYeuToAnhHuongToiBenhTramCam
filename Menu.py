@@ -21,36 +21,26 @@ VALID_VALUES = {
     "Depression Risk": ["Low", "Medium", "High", "Very High"]
 }
 
+
 class DataApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Quản lý dữ liệu")
         self.root.geometry("1200x600")
 
-        # Đọc dữ liệu từ file CSV
         self.data = read_csv_data()
         self.current_page = 1
         self.page_size = 10
         self.total_pages = 1
 
-        # Khung Treeview và thanh cuộn
+        # Treeview và thanh cuộn
         self.tree_frame = ttk.Frame(root)
         self.tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        self.tree = ttk.Treeview(self.tree_frame, columns=list(self.data.columns), show="headings", height=20)
-        for col in self.data.columns:
-            self.tree.heading(col, text=col)
-            self.tree.column(col, width=150, anchor=tk.CENTER)
-
-        self.v_scroll = ttk.Scrollbar(self.tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        self.tree.configure(yscrollcommand=self.v_scroll.set)
-        self.v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.h_scroll = ttk.Scrollbar(self.tree_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
-        self.tree.configure(xscrollcommand=self.h_scroll.set)
-        self.h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
-
-        self.tree.pack(fill=tk.BOTH, expand=True)
+        self.tree, self.v_scroll, self.h_scroll = self.create_treeview_with_scrollbars(
+            parent_frame=self.tree_frame, columns=list(self.data.columns), height=20
+        )
+        self.tree.bind("<Double-1>", self.on_treeview_double_click)
 
         # Menu chức năng
         self.menu_frame = ttk.Frame(root)
@@ -59,43 +49,50 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Xem dữ liệu", command=self.view_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thêm dữ liệu", command=self.add_new_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Tìm kiếm dữ liệu", command=self.open_search_window).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Cập nhật dữ liệu", command=self.update_data).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
         self.nav_frame = ttk.Frame(root)
         self.nav_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
 
-        self.prev_button = ttk.Button(self.nav_frame, text="Trang trước", command=self.prev_page)
-        self.prev_button.pack(side=tk.LEFT, padx=10)
-
+        ttk.Button(self.nav_frame, text="Trang trước", command=self.prev_page).pack(side=tk.LEFT, padx=10)
         self.page_entry = ttk.Entry(self.nav_frame, width=5)
         self.page_entry.pack(side=tk.LEFT, padx=5)
-
-        self.goto_button = ttk.Button(self.nav_frame, text="Đi tới trang", command=self.goto_page)
-        self.goto_button.pack(side=tk.LEFT, padx=5)
-
-        self.next_button = ttk.Button(self.nav_frame, text="Trang sau", command=self.next_page)
-        self.next_button.pack(side=tk.RIGHT, padx=10)
+        ttk.Button(self.nav_frame, text="Đi tới trang", command=self.goto_page).pack(side=tk.LEFT, padx=5)
+        ttk.Button(self.nav_frame, text="Trang sau", command=self.next_page).pack(side=tk.RIGHT, padx=10)
 
         self.pagination_label = ttk.Label(root, text="Trang: 1/1", font=("Arial", 10))
         self.pagination_label.pack(side=tk.BOTTOM, pady=5)
 
         self.update_treeview()
+        
+    def on_treeview_double_click(self, event):
+        """
+        Xử lý khi người dùng nhấp đúp vào một hàng trong Treeview.
+        """
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showerror("Lỗi", "Vui lòng chọn một dòng để cập nhật.")
+            return
 
-    def update_treeview(self):
-        try:
-            page_data, self.total_pages = paginate_data(self.data, self.page_size, self.current_page)
-            for row in self.tree.get_children():
-                self.tree.delete(row)
-            for _, row in page_data.iterrows():
-                self.tree.insert("", tk.END, values=list(row))
-            self.pagination_label.config(text=f"Trang: {self.current_page}/{self.total_pages}")
-        except ValueError as e:
-            messagebox.showerror("Lỗi", str(e))
-
+        # Lấy chỉ số của dòng được chọn
+        record_index = int(self.tree.item(selected_item)["tags"][0])
+        
+        # Mở cửa sổ cập nhật cho dòng được chọn
+        self.open_input_window(
+            title="Cập nhật dữ liệu",
+            action_callback=lambda updated_data: self.handle_update_data(record_index, updated_data),
+            record_data=self.data.loc[record_index].to_dict()
+        )
+    
     def view_data(self):
+        """
+        Hiển thị dữ liệu trong Treeview dựa trên số dòng mỗi trang.
+        """
         def set_page_size():
+            """
+            Cập nhật số dòng hiển thị mỗi trang.
+            """
             try:
                 page_size = int(entry.get())
                 if page_size <= 0:
@@ -107,6 +104,7 @@ class DataApp:
             except ValueError:
                 messagebox.showerror("Lỗi", "Số dòng mỗi trang phải là số nguyên dương.")
 
+        # Cửa sổ để nhập số dòng mỗi trang
         view_window = tk.Toplevel(self.root)
         view_window.title("Xem dữ liệu")
         view_window.geometry("300x150")
@@ -117,9 +115,94 @@ class DataApp:
 
         ttk.Button(view_window, text="Xác nhận", command=set_page_size).pack(pady=10)
 
-    def add_new_data(self):
+
+
+    def create_treeview_with_scrollbars(self, parent_frame, columns, height=15):
+        tree_frame = ttk.Frame(parent_frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True)
+
+        tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, width=150, anchor=tk.CENTER)
+
+        tree.grid(row=0, column=0, sticky="nsew")
+        v_scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=tree.yview)
+        v_scroll.grid(row=0, column=1, sticky="ns")
+        tree.configure(yscrollcommand=v_scroll.set)
+
+        h_scroll = ttk.Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=tree.xview)
+        h_scroll.grid(row=1, column=0, sticky="ew")
+        tree.configure(xscrollcommand=h_scroll.set)
+
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
+
+        return tree, v_scroll, h_scroll
+
+    def update_treeview(self):
+        page_data, self.total_pages = paginate_data(self.data, self.page_size, self.current_page)
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for idx, row in page_data.iterrows():
+            self.tree.insert("", tk.END, values=list(row), tags=(idx,))
+        self.pagination_label.config(text=f"Trang: {self.current_page}/{self.total_pages}")
+
+    def handle_update_data(self, record_index, updated_data):
+        """
+        Cập nhật dữ liệu tại chỉ số được chọn.
+        """
+        errors = []
+        for col, value in updated_data.items():
+            if col == "Age":
+                if not str(value).isdigit() or not (0 <= int(value) <= 120):
+                    errors.append(f"Trường '{col}' phải là số từ 0 đến 120.")
+            elif col == "Income":
+                try:
+                    value = float(value)
+                    if value < 0:
+                        errors.append(f"Trường '{col}' phải là số không âm.")
+                except ValueError:
+                    errors.append(f"Trường '{col}' phải là số.")
+            elif col in VALID_VALUES and value not in VALID_VALUES[col]:
+                errors.append(f"Trường '{col}' phải thuộc {VALID_VALUES[col]}.")
+
+            # Lưu dữ liệu vào DataFrame nếu không có lỗi
+            if not errors:
+                if pd.api.types.is_numeric_dtype(self.data[col]):
+                    self.data.at[record_index, col] = pd.to_numeric(value, errors="coerce")
+                else:
+                    self.data.at[record_index, col] = value
+
+        if errors:
+            messagebox.showerror("Lỗi nhập liệu", "\n".join(errors))
+        else:
+            self.data.to_csv(CSV_FILE, index=False)
+            self.update_treeview()
+            messagebox.showinfo("Thành công", "Dữ liệu đã được cập nhật.")
+
+
+    def open_input_window(self, title, action_callback, record_data=None):
+        input_window = tk.Toplevel(self.root)
+        input_window.title(title)
+        input_window.geometry("600x600")
+
+        widgets = {}
+        for i, col in enumerate(self.data.columns):
+            ttk.Label(input_window, text=f"{col}:").grid(row=i, column=0, padx=10, pady=5, sticky=tk.W)
+            if col in VALID_VALUES:
+                widget = ttk.Combobox(input_window, values=VALID_VALUES[col], state="readonly")
+                if record_data:
+                    widget.set(record_data.get(col, ""))
+            else:
+                widget = ttk.Entry(input_window, width=30)
+                if record_data:
+                    widget.insert(0, record_data.get(col, ""))
+            widget.grid(row=i, column=1, padx=10, pady=5)
+            widgets[col] = widget
+
         def save_data():
-            new_data = {}
+            data = {}
             errors = []
             for col, widget in widgets.items():
                 value = widget.get().strip()
@@ -127,69 +210,72 @@ class DataApp:
                     if not value.isdigit() or not (0 <= int(value) <= 120):
                         errors.append(f"Trường '{col}' phải là số từ 0 đến 120.")
                     else:
-                        new_data[col] = int(value)
+                        data[col] = int(value)
                 elif col == "Income":
                     if not value.replace('.', '', 1).isdigit() or float(value) < 0:
                         errors.append(f"Trường '{col}' phải là số không âm.")
                     else:
-                        new_data[col] = float(value)
+                        data[col] = float(value)
                 elif col in VALID_VALUES and value not in VALID_VALUES[col]:
                     errors.append(f"Trường '{col}' phải thuộc {VALID_VALUES[col]}.")
                 else:
-                    new_data[col] = value
+                    data[col] = value
 
             if errors:
                 messagebox.showerror("Lỗi nhập liệu", "\n".join(errors))
                 return
 
-            self.data = create_data(self.data, new_data)
-            self.current_page = 1
-            self.update_treeview()
-            messagebox.showinfo("Thành công", "Dữ liệu mới đã được thêm.")
-            add_window.destroy()
+            action_callback(data)
+            input_window.destroy()
 
-        add_window = tk.Toplevel(self.root)
-        add_window.title("Thêm dữ liệu mới")
-        add_window.geometry("600x600")
+        ttk.Button(input_window, text="Lưu", command=save_data).grid(row=len(self.data.columns), column=0, columnspan=2, pady=10)
 
-        widgets = {}
-        for i, col in enumerate(self.data.columns):
-            ttk.Label(add_window, text=f"{col}:").grid(row=i, column=0, padx=10, pady=5, sticky=tk.W)
-            if col in VALID_VALUES:
-                widget = ttk.Combobox(add_window, values=VALID_VALUES[col], state="readonly")
-                widget.grid(row=i, column=1, padx=10, pady=5)
-            else:
-                widget = ttk.Entry(add_window, width=30)
-                widget.grid(row=i, column=1, padx=10, pady=5)
-            widgets[col] = widget
+    def add_new_data(self):
+        self.open_input_window("Thêm dữ liệu mới", self.handle_add_data)
 
-        ttk.Button(add_window, text="Lưu", command=save_data).grid(row=len(self.data.columns), column=0, columnspan=2, pady=10)
-
-    def search_records(self, column, value):
-        if column not in self.data.columns:
-            messagebox.showerror("Lỗi", f"Cột '{column}' không tồn tại.")
-            return pd.DataFrame()
-        return self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
+    def handle_add_data(self, new_data):
+        self.data = create_data(self.data, new_data)
+        self.current_page = 1
+        self.update_treeview()
+        messagebox.showinfo("Thành công", "Dữ liệu mới đã được thêm.")
 
     def open_search_window(self):
         """
-        Mở cửa sổ tìm kiếm để người dùng tìm theo bất kỳ cột nào.
+        Mở cửa sổ tìm kiếm và tích hợp chức năng nhấp đúp để cập nhật dữ liệu.
         """
         def perform_search():
+            """
+            Thực hiện tìm kiếm và hiển thị kết quả trong Treeview.
+            """
             column = column_combobox.get()
             value = value_entry.get().strip()
             if not column or not value:
                 messagebox.showerror("Lỗi", "Vui lòng chọn cột và nhập giá trị cần tìm.")
                 return
-            results = self.search_records(column, value)
-            if results.empty:
-                messagebox.showinfo("Kết quả", "Không tìm thấy bản ghi nào phù hợp.")
-            else:
-                for row in results_tree.get_children():
-                    results_tree.delete(row)
-                for idx, row in results.iterrows():
-                    results_tree.insert("", tk.END, values=list(row), tags=(idx,))
-                messagebox.showinfo("Kết quả", f"Tìm thấy {len(results)} bản ghi.")
+            results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
+            for row in results_tree.get_children():
+                results_tree.delete(row)
+            for idx, row in results.iterrows():
+                results_tree.insert("", tk.END, values=list(row), tags=(idx,))
+
+        def on_double_click(event):
+            """
+            Xử lý sự kiện nhấp đúp vào một hàng trong Treeview kết quả.
+            """
+            selected_item = results_tree.selection()
+            if not selected_item:
+                messagebox.showerror("Lỗi", "Vui lòng chọn một dòng để cập nhật.")
+                return
+
+            # Lấy chỉ số của dòng được chọn
+            record_index = int(results_tree.item(selected_item)["tags"][0])
+
+            # Mở cửa sổ cập nhật
+            self.open_input_window(
+                title="Cập nhật dữ liệu",
+                action_callback=lambda updated_data: self.handle_update_data(record_index, updated_data),
+                record_data=self.data.loc[record_index].to_dict()
+            )
 
         # Cửa sổ tìm kiếm
         search_window = tk.Toplevel(self.root)
@@ -206,154 +292,36 @@ class DataApp:
 
         ttk.Button(search_window, text="Tìm kiếm", command=perform_search).pack(pady=10)
 
-        # Frame chứa Treeview và thanh cuộn
-        results_frame = ttk.Frame(search_window)
-        results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        # Tạo Treeview để hiển thị kết quả tìm kiếm
+        results_tree, _, _ = self.create_treeview_with_scrollbars(
+            parent_frame=search_window,
+            columns=list(self.data.columns),
+            height=15
+        )
 
-        # Treeview hiển thị kết quả tìm kiếm
-        results_tree = ttk.Treeview(results_frame, columns=list(self.data.columns), show="headings", height=15)
-        for col in self.data.columns:
-            results_tree.heading(col, text=col)
-            results_tree.column(col, width=100, anchor=tk.CENTER)
-
-        results_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Thanh cuộn dọc cho Treeview
-        v_scroll = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=results_tree.yview)
-        results_tree.configure(yscrollcommand=v_scroll.set)
-        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-        # Thanh cuộn ngang cho Treeview
-        h_scroll = ttk.Scrollbar(search_window, orient=tk.HORIZONTAL, command=results_tree.xview)
-        results_tree.configure(xscrollcommand=h_scroll.set)
-        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
-
-    def update_data(self):
-        def find_records():
-            name = name_entry.get().strip()
-            if not name:
-                messagebox.showerror("Lỗi", "Vui lòng nhập tên để tìm kiếm.")
-                return
-            results = self.search_records("Name", name)
-            if results.empty:
-                messagebox.showinfo("Kết quả", "Không tìm thấy bản ghi nào phù hợp.")
-            else:
-                for row in results_tree.get_children():
-                    results_tree.delete(row)
-                for idx, row in results.iterrows():
-                    results_tree.insert("", tk.END, values=list(row), tags=(idx,))
-
-        def select_record(event):
-            selected_item = results_tree.selection()
-            if not selected_item:
-                return
-            record_index = int(results_tree.item(selected_item)["tags"][0])
-            open_update_window(record_index)
-
-        def open_update_window(record_index):
-            update_window = tk.Toplevel(self.root)
-            update_window.title("Cập nhật dữ liệu")
-            update_window.geometry("600x600")
-            record_data = self.data.loc[record_index]
-            widgets = {}
-            for i, col in enumerate(self.data.columns):
-                ttk.Label(update_window, text=f"{col}:").grid(row=i, column=0, padx=10, pady=5, sticky=tk.W)
-                if col in VALID_VALUES:
-                    widget = ttk.Combobox(update_window, values=VALID_VALUES[col], state="readonly")
-                    widget.set(record_data[col])
-                    widget.grid(row=i, column=1, padx=10, pady=5)
-                else:
-                    widget = ttk.Entry(update_window, width=30)
-                    widget.insert(0, str(record_data[col]))
-                    widget.grid(row=i, column=1, padx=10, pady=5)
-                widgets[col] = widget
-
-            def save_changes():
-                updated_entry = {}
-                errors = []
-                for col, widget in widgets.items():
-                    value = widget.get().strip()
-                    if col == "Age":
-                        if not value.isdigit() or not (0 <= int(value) <= 120):
-                            errors.append(f"Trường '{col}' phải là số từ 0 đến 120.")
-                        else:
-                            updated_entry[col] = int(value)
-                    elif col == "Income":
-                        if not value.replace('.', '', 1).isdigit() or float(value) < 0:
-                            errors.append(f"Trường '{col}' phải là số không âm.")
-                        else:
-                            updated_entry[col] = float(value)
-                    elif col in VALID_VALUES and value not in VALID_VALUES[col]:
-                        errors.append(f"Trường '{col}' phải thuộc {VALID_VALUES[col]}.")
-                    else:
-                        updated_entry[col] = value
-
-                if errors:
-                    messagebox.showerror("Lỗi nhập liệu", "\n".join(errors))
-                    return
-
-                for col, value in updated_entry.items():
-                    if pd.api.types.is_numeric_dtype(self.data[col]):
-                        self.data.at[record_index, col] = pd.to_numeric(value, errors="coerce")
-                    else:
-                        self.data.at[record_index, col] = value
-
-                self.data.to_csv(CSV_FILE, index=False)
-                self.update_treeview()
-                messagebox.showinfo("Thành công", "Cập nhật dữ liệu thành công.")
-                update_window.destroy()
-                search_window.destroy()
-
-            ttk.Button(update_window, text="Lưu", command=save_changes).grid(row=len(self.data.columns), column=0, columnspan=2, pady=10)
-
-        search_window = tk.Toplevel(self.root)
-        search_window.title("Tìm và chọn bản ghi")
-        search_window.geometry("800x400")
-
-        ttk.Label(search_window, text="Nhập tên để tìm kiếm:").pack(padx=10, pady=5)
-        name_entry = ttk.Entry(search_window, width=30)
-        name_entry.pack(padx=10, pady=5)
-
-        ttk.Button(search_window, text="Tìm kiếm", command=find_records).pack(pady=10)
-
-        results_frame = ttk.Frame(search_window)
-        results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        results_tree = ttk.Treeview(results_frame, columns=list(self.data.columns), show="headings", height=10)
-        for col in self.data.columns:
-            results_tree.heading(col, text=col)
-            results_tree.column(col, width=100, anchor=tk.CENTER)
-
-        results_tree.pack(fill=tk.BOTH, expand=True)
-        results_tree.bind("<Double-1>", select_record)
-
-        scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=results_tree.yview)
-        results_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-    def next_page(self):
-        if self.current_page < self.total_pages:
-            self.current_page += 1
-            self.update_treeview()
-        else:
-            messagebox.showinfo("Thông báo", "Đây là trang cuối cùng.")
+        # Gắn sự kiện nhấp đúp vào Treeview
+        results_tree.bind("<Double-1>", on_double_click)
 
     def prev_page(self):
         if self.current_page > 1:
             self.current_page -= 1
             self.update_treeview()
-        else:
-            messagebox.showinfo("Thông báo", "Đây là trang đầu tiên.")
+
+    def next_page(self):
+        if self.current_page < self.total_pages:
+            self.current_page += 1
+            self.update_treeview()
 
     def goto_page(self):
         try:
             page = int(self.page_entry.get())
-            if page < 1 or page > self.total_pages:
-                raise ValueError("Trang không hợp lệ.")
-            self.current_page = page
-            self.update_treeview()
+            if 1 <= page <= self.total_pages:
+                self.current_page = page
+                self.update_treeview()
+            else:
+                raise ValueError
         except ValueError:
-            messagebox.showerror("Lỗi", "Số trang phải là số nguyên hợp lệ trong khoảng.")
+            messagebox.showerror("Lỗi", "Số trang phải là số hợp lệ.")
 
 if __name__ == "__main__":
     root = tk.Tk()
