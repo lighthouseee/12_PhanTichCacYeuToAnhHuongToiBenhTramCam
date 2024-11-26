@@ -44,6 +44,19 @@ def create_data(data, new_entry):
     updated_data = pd.concat([data, new_data], ignore_index=True)
     return updated_data
 
+def delete_records(data, indices):
+    """
+    Xóa các bản ghi từ DataFrame dựa trên danh sách chỉ số.
+    """
+    try:
+        # Xóa các bản ghi khỏi DataFrame
+        data = data.drop(indices).reset_index(drop=True)
+        # Ghi lại vào file CSV
+        data.to_csv(CSV_FILE, index=False)
+        return data
+    except Exception as e:
+        raise ValueError(f"Đã xảy ra lỗi khi xóa dữ liệu: {e}")
+
 def update_data(data, target_name, updated_entry):
     """
     Cập nhật dữ liệu của một bản ghi cụ thể dựa trên tên.
