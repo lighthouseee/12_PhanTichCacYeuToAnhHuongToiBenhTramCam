@@ -15,13 +15,23 @@ employment_depression_percentage = employment_depression.div(employment_depressi
 fig, axes = plt.subplots(1, len(employment_depression_percentage), figsize=(15, 6))
 
 for i, employment_status in enumerate(employment_depression_percentage.index):
-    employment_depression_percentage.loc[employment_status].plot.pie(
+    wedges, texts, autotexts = axes[i].pie(
+        employment_depression_percentage.loc[employment_status],
         autopct='%1.1f%%',
-        startangle=90,
-        ax=axes[i],
-        title=f'Employment: {employment_status}'
+        startangle=90
     )
-    axes[i].set_ylabel('')  # Loại bỏ nhãn trục y để tăng thẩm mỹ
+    
+    # Set the title for each subplot
+    axes[i].set_title(f'Employment: {employment_status}')
+    
+    # Add legend outside the pie chart
+    axes[i].legend(
+        employment_depression_percentage.columns,
+        loc="center left",
+        bbox_to_anchor=(1, 0.5)
+    )
+    # Loại bỏ nhãn trục y để tăng thẩm mỹ
+    axes[i].set_ylabel('')
 
 # Căn chỉnh bố cục
 plt.tight_layout()

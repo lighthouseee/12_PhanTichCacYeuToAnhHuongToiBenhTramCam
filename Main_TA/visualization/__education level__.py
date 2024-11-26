@@ -2,34 +2,42 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load the dataset
+# Đọc dữ liệu từ file CSV
 file_path = 'filtered_depression_data.csv'
 data = pd.read_csv(file_path)
 
-# Prepare the data
+# Chuẩn bị dữ liệu
 education_vs_depression = data[['Education Level', 'Depression Risk']]
 
-# Calculate counts grouped by 'Education Level' and 'Depression Risk'
+# Tính số lượng nhóm theo 'Education Level' và 'Depression Risk'
 education_depression_counts = education_vs_depression.value_counts().reset_index()
 education_depression_counts.columns = ['Education Level', 'Depression Risk', 'Count']
 
-# Sort the data by count in descending order
+# Sắp xếp dữ liệu theo số lượng giảm dần
 education_depression_sorted = education_depression_counts.sort_values(by='Count', ascending=False)
 
-# Create a bar plot with data sorted in descending order
+# Thiết lập biểu đồ
 plt.figure(figsize=(12, 6))
+
+# Áp dụng bảng màu gradient sáng từ Seaborn
+sns.set(style="whitegrid")
+palette = sns.color_palette("coolwarm", len(education_depression_sorted['Depression Risk'].unique()))
+
+# Vẽ biểu đồ cột với dữ liệu được sắp xếp giảm dần
 sns.barplot(
     data=education_depression_sorted, 
     x='Education Level', 
     y='Count', 
     hue='Depression Risk', 
-    palette='Set2',
+    palette=palette,
     dodge=True
 )
-plt.title('Depression Risk by Education Level (Descending Order)', fontsize=14, fontweight='bold')
-plt.xlabel('Education Level', fontsize=12)
-plt.ylabel('Count', fontsize=12)
+
+# Tùy chỉnh biểu đồ
+plt.title('Rủi ro trầm cảm theo trình độ học vấn (Thứ tự giảm dần)', fontsize=14, fontweight='bold')
+plt.xlabel('Trình độ học vấn', fontsize=12)
+plt.ylabel('Số lượng', fontsize=12)
 plt.xticks(rotation=45, ha='right')
-plt.legend(title='Depression Risk', loc='upper right')
+plt.legend(title='Rủi ro trầm cảm', loc='upper right')
 plt.tight_layout()
 plt.show()

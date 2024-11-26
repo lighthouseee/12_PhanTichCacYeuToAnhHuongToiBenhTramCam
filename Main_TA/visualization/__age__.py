@@ -29,9 +29,9 @@ for risk_level in valid_depression_risk:
     )
 
 # Tùy chỉnh biểu đồ
-plt.title('Age Distribution Density for High and Very High Depression Risk', fontsize=14, fontweight='bold')
-plt.xlabel('Age (Tuổi)', fontsize=12)
-plt.ylabel('Density (Mật độ)', fontsize=12)
+plt.title('Phân bố mật độ độ tuổi cho nguy cơ trầm cảm cao và rất cao', fontsize=14, fontweight='bold')
+plt.xlabel('Tuổi', fontsize=12)
+plt.ylabel('Mật độ', fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.legend(loc='upper left', fontsize=10)
 plt.tight_layout()
