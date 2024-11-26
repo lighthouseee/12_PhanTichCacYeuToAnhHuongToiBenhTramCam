@@ -43,12 +43,12 @@ def main():
                 print("Không tìm thấy dữ liệu!")
 
 
-        elif choice == "4": # Xóa dữ liệu 
+        elif choice == "4":  # Xóa dữ liệu
             target_names = input("Nhập tên cần xóa (phân cách bằng dấu phẩy): ").split(", ")
-            if delete_data(data.to_dict("records"), target_names):
-                print("Xóa thành công!")
+            if delete_data(data, target_names):  # Truyền trực tiếp DataFrame
+                 print("Xóa thành công!")
             else:
-                print("Không tìm thấy dữ liệu để xóa!")
+                 print("Không tìm thấy dữ liệu để xóa!")
 
         elif choice == "5":  # Sắp xếp dữ liệu
             sorted_data = sort_data(data)

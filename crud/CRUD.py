@@ -86,7 +86,14 @@ def update_data(data, target_name, updated_entry):
 
 # Xóa dữ liệu
 def delete_data(data, target_names):
+    # Lấy số lượng bản ghi ban đầu
     initial_count = len(data)
+    
+    # Loại bỏ các bản ghi có tên trong `target_names`
     data = data[~data["Name"].isin(target_names)]
+    
+    # Lưu dữ liệu sau khi xóa
     save_data(data)
+    
+    # Trả về True nếu đã xóa ít nhất một bản ghi
     return len(data) < initial_count
