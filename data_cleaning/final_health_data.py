@@ -5,10 +5,6 @@ import numpy as np
 file_path = 'depression_data.csv'  
 data = pd.read_csv(file_path)
 
-# Hiển thị thông tin tổng quan ban đầu
-print("Một vài dòng dữ liệu:\n", data.head())
-
-# ----- Mô tả các giá trị hợp lệ cho từng trường dữ liệu -----
 def describe_valid_values(df):
     """
     Mô tả các giá trị hợp lệ cho từng trường dữ liệu trong DataFrame.
@@ -38,11 +34,6 @@ def describe_valid_values(df):
         else:
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
-# Gọi hàm mô tả các giá trị hợp lệ
-describe_valid_values(data)
-
-# ----- Bước 1: Phân tích dữ liệu -----
-# 1. Kiểm tra giá trị bất thường
 def detect_outliers(df):
     """
     Phát hiện giá trị bất thường trong dữ liệu.
@@ -81,82 +72,82 @@ def detect_outliers(df):
     
     return issues
 
-outliers = detect_outliers(data)
-print("\nCác vấn đề bất thường:", outliers)
+def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Loại bỏ các giá trị bất thường từ DataFrame dựa trên các điều kiện hợp lệ.
 
-# 2. Kiểm tra dữ liệu thiếu (missing values)
-missing_values = data.isnull().sum()
-print("Số lượng giá trị thiếu trong từng cột:\n", missing_values)
+    Args:
+        data (pd.DataFrame): DataFrame cần loại bỏ giá trị bất thường.
 
-# ----- Bước 2: Làm sạch dữ liệu -----
+    Returns:
+        pd.DataFrame: DataFrame đã loại bỏ các giá trị bất thường. 
+    """
+    # Điều kiện lọc từng cột
+    conditions = (
+        (data['Age'] >= 18) & (data['Age'] <= 80) &
+        (data['Income'] >= 0) &
+        (data['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active'])) &
+        (data['Smoking Status'].isin(['Non-smoker', 'Former', 'Current'])) &
+        (data['Employment Status'].isin(['Employed', 'Unemployed'])) &
+        (data['Alcohol Consumption'].isin(['Low', 'Moderate', 'High'])) &
+        (data['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy'])) &
+        (data['Sleep Patterns'].isin(['Poor', 'Good', 'Fair'])) &
+        (data['History of Mental Illness'].isin(['Yes', 'No'])) &
+        (data['Family History of Depression'].isin(['Yes', 'No'])) &
+        (data['Chronic Medical Conditions'].isin(['Yes', 'No'])) &
+        (data['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed'])) &
+        (data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])) &
+        (data['Number of Children'] >= 0)
+    )
+    
+    # Lọc DataFrame bằng các điều kiện
+    data_cleaned = data[conditions]
+    
+    return data_cleaned
 
-# 1. Loại bỏ giá trị bất thường
-data = data[(data['Age'] >= 18) & (data['Age'] <= 80)]  # Tuổi trong khoảng 18-120
-data = data[data['Income'] >= 0]  # Thu nhập không âm
-
-valid_physical_activity_levels = ['Sedentary', 'Moderate', 'Active']
-data = data[data['Physical Activity Level'].isin(valid_physical_activity_levels)]
-
-valid_smoking_status = ['Non-smoker', 'Former', 'Current']
-data = data[data['Smoking Status'].isin(valid_smoking_status)]
-
-valid_employment_status = ['Employed', 'Unemployed']
-data = data[data['Employment Status'].isin(valid_employment_status)]
-
-valid_alcohol_consumption = ['Low', 'Moderate', 'High']
-data = data[data['Alcohol Consumption'].isin(valid_alcohol_consumption)]
-
-valid_dietary_habits = ['Healthy', 'Moderate', 'Unhealthy']
-data = data[data['Dietary Habits'].isin(valid_dietary_habits)]
-
-valid_sleep_patterns = ['Poor', 'Good', 'Fair']
-data = data[data['Sleep Patterns'].isin(valid_sleep_patterns)]
-
-valid_history_of_mental_illness = ['Yes', 'No']
-data = data[data['History of Mental Illness'].isin(valid_history_of_mental_illness)]
-
-valid_family_history_of_depression = ['Yes', 'No']
-data = data[data['Family History of Depression'].isin(valid_family_history_of_depression)]
-
-valid_chronic_medical_conditions = ['Yes', 'No']
-data = data[data['Chronic Medical Conditions'].isin(valid_chronic_medical_conditions)]
-
-valid_marital_status = ['Single', 'Married', 'Divorced', 'Widowed']
-data = data[data['Marital Status'].isin(valid_marital_status)]
-
-valid_education_level = ['High School', "Bachelor's Degree", "Master's Degree", 'Associate Degree', 'PhD']
-data = data[data['Education Level'].isin(valid_education_level)]
-
-data = data[data['Number of Children'] >= 0]  # Số lượng con cái không âm
-
-# 3. Điền giá trị thiếu
-for col in data.columns:
-    if data[col].dtype in ['int64', 'float64']:  # Xử lý các cột số
+def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Điền các giá trị thiếu trong DataFrame, tối ưu hóa hiệu suất bằng cách sử dụng các phương thức vectorized.
+    
+    Args:
+        data (pd.DataFrame): DataFrame cần điền giá trị thiếu.
+        
+    Returns:
+        pd.DataFrame: DataFrame đã được điền giá trị thiếu.
+    """
+    # Xử lý các cột số
+    num_columns = data.select_dtypes(include=['int64', 'float64']).columns
+    for col in num_columns:
         if col == 'Age':
-            # Điền giá trị thiếu trong cột "Age" bằng giá trị trung bình của cột
             data[col].fillna(data[col].mean())
         elif col == 'Income':
-            # Điền giá trị thiếu trong cột "Income" bằng giá trị trung bình của cột
             data[col].fillna(data[col].mean())
         elif col == 'Number of Children':
-            # Điền giá trị thiếu trong cột "Number of Children"
-            # Nếu tuổi < 18 thì điền 0, nếu tuổi >= 18 thì điền 1
-            data[col] = data.apply(lambda row: 0 if row['Age'] < 18 else 1 if pd.isna(row[col]) else row[col], axis=1)
+            # Điều kiện điền giá trị thiếu cho 'Number of Children' dựa trên 'Age'
+            data[col] = np.select(
+                [data['Age'] < 18, data['Age'] >= 18],
+                [0, 1],
+                default=data[col]  # Giữ nguyên giá trị nếu không thỏa mãn điều kiện
+            )
+            # Điền NaN còn lại bằng giá trị trung bình (nếu có)
+            data[col].fillna(data[col].mean())
         else:
-            # Điền giá trị thiếu cho các cột số khác (nếu có)
+            # Điền giá trị thiếu trong các cột số khác bằng trung bình
             data[col].fillna(data[col].mean())
     
-    else:  # Xử lý các cột chuỗi
+    # Xử lý các cột chuỗi
+    str_columns = data.select_dtypes(include=['object']).columns
+    for col in str_columns:
         if col in ['History of Mental Illness', 'History of Substance Abuse', 'Family History of Depression', 'Chronic Medical Conditions']:
-            # Nếu là các cột này, điền 'No'
+            # Điền 'No' cho các cột này
             data[col].fillna('No')
         else:
-            # Còn lại điền ngẫu nhiên các giá trị khả dụng trong cột đó
-            valid_values = data[col].dropna().unique()  # Lấy các giá trị không thiếu trong cột
-            data[col] = data.apply(lambda row: np.random.choice(valid_values) if pd.isna(row[col]) else row[col], axis=1)
+            # Điền ngẫu nhiên giá trị không thiếu trong cột
+            valid_values = data[col].dropna().unique()
+            data[col].fillna(pd.Series(np.random.choice(valid_values, size=data[col].isna().sum())))
+    
+    return data
 
-# ----- Bước 3: Phát sinh dữ liệu mới -----
-# Tạo cột "Depression Risk" - Đây là cột dự đoán xem một người có khả năng dẫn đến trầm cảm hay không dựa trên các điều kiện khách quan
 def predict_depression_risk(row):
     """
     Dự đoán mức độ trầm cảm dựa trên các yếu tố trong dữ liệu.
@@ -264,17 +255,41 @@ def predict_depression_risk(row):
     else:
         return 'Very Low'
 
+# ----- Kết quả -----
+
+# Hiển thị thông tin tổng quan ban đầu
+print("Một vài dòng dữ liệu:\n", data.head())
+
+# ----- Mô tả các giá trị hợp lệ cho từng trường dữ liệu -----
+describe_valid_values(data)
+
+# ----- Bước 1: Phân tích dữ liệu -----
+# 1. Kiểm tra giá trị bất thường
+outliers = detect_outliers(data)
+print("\nCác vấn đề bất thường:", outliers)
+
+# 2. Kiểm tra dữ liệu thiếu (missing values)
+missing_values = data.isnull().sum()
+print("Số lượng giá trị thiếu trong từng cột:\n", missing_values)
+
+# ----- Bước 2: Làm sạch dữ liệu -----
+# 1. Loại bỏ giá trị bất thường
+cleaned_data = remove_outliers(data)
+
+# 2. Điền các giá trị thiếu
+cleaned_data = fill_missing_values(cleaned_data)
+
+# ----- Bước 3: Phát sinh dữ liệu mới -----
+# Tạo cột "Depression Risk" - Đây là cột dự đoán xem một người có khả năng dẫn đến trầm cảm hay không dựa trên các điều kiện khách quan
 # Áp dụng hàm dự đoán mức độ trầm cảm vào từng dòng dữ liệu
 data['Depression Risk'] = data.apply(predict_depression_risk, axis=1)
 
-# ----- Kết quả -----
 # Thông tin sau khi làm sạch và thêm cột "Depression Risk"
 print("\nDữ liệu sau khi làm sạch và thêm cột Depression Risk:\n")
 print(data[['Name','Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'History of Mental Illness', 'Chronic Medical Conditions', 'Sleep Patterns', 'Depression Risk']].head())
 
 # Lưu dữ liệu đã làm sạch vào file mới
 output_path = 'cleaned_and_predicted_data.csv'
-
 data.to_csv(output_path, index=False)
 print(f"\nDữ liệu đã được lưu vào file '{output_path}'.")
 
