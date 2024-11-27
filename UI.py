@@ -57,7 +57,7 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Xóa dữ liệu", command=self.delete_selected_records).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Sắp xếp", command=self.open_sort_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear_filter).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
@@ -213,7 +213,6 @@ class DataApp:
         entry.pack(pady=5)
 
         ttk.Button(view_window, text="Xác nhận", command=set_page_size).pack(pady=10)
-
 
 
     def create_treeview_with_scrollbars(self, parent_frame, columns, height=15):
@@ -377,7 +376,7 @@ class DataApp:
             height=15
         )
 
-        results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
+        # results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
         # Thêm nút "Xóa" để xóa các dòng đã chọn
         ttk.Button(search_window, text="Xóa dữ liệu", command=lambda: self.delete_records_in_search(results_tree)).pack(pady=10)
         
@@ -445,14 +444,15 @@ class DataApp:
 
         ttk.Button(sort_window, text="Sắp xếp", command=perform_sort).pack(pady=10)
 
-    def clear_filter(self):
+    def clear(self):
         """
-        Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc).
+        Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc) và cập nhật lại file CSV.
         """
         self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
-        self.current_page = 1  # Quay lại trang đầu tiên
-        self.update_treeview()
+        self.update_treeview()  # Cập nhật Treeview với dữ liệu gốc
+        self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
         messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
+
 
     def prev_page(self):
         if self.current_page > 1:
