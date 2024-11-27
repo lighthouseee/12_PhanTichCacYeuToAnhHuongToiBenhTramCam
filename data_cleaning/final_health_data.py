@@ -148,59 +148,59 @@ def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
     
     return data
 
-def predict_depression_risk(row):
+def predict_depression_risk_vectorized(data: pd.DataFrame) -> pd.Series:
     """
     Dự đoán mức độ trầm cảm dựa trên các yếu tố trong dữ liệu.
 
     Args:
-        row (pd.Series): Một dòng dữ liệu.
+        data (pd.DataFrame): Dữ liệu đầu vào.
 
     Returns:
-        str: Mức độ trầm cảm: 'Very High', 'High', 'Medium', 'Low', 'Very Low'.
+        pd.Series: Mức độ trầm cảm của từng dòng trong dữ liệu.
     """
-    risk_score = 0
+    risk_scores = np.zeros(len(data))  # Khởi tạo mảng điểm số rủi ro
 
     # Thu nhập thấp (dưới 20,000)
-    if row['Income'] < 20000:
-        risk_score += 1
+    if (data['Income'] < 20000).any():
+        risk_scores[data['Income'] < 20000] += 1
     
     # Tình trạng hoạt động thể chất ít (Sedentary)
     # Lý do: Lối sống ít vận động đã được chứng minh là có liên quan đến nguy cơ trầm cảm cao hơn.
     # Hoạt động thể chất giúp giảm căng thẳng, cải thiện tâm trạng thông qua việc giải phóng endorphin.
     # Người ít vận động thường dễ bị cô lập xã hội, cảm giác mệt mỏi và các vấn đề sức khỏe khác (như béo phì, bệnh tim),
     # từ đó làm tăng nguy cơ trầm cảm.
-    if row['Physical Activity Level'] == 'Sedentary':
-        risk_score += 1
+    if (data['Physical Activity Level'] == 'Sedentary').any():
+        risk_scores[data['Physical Activity Level'] == 'Sedentary'] += 1
         
     # Hút thuốc (Smoking)
     # Lý do: Hút thuốc có liên hệ chặt chẽ với nguy cơ cao về sức khỏe tâm thần, bao gồm trầm cảm.
     # Nicotine có thể tạo cảm giác thoải mái tức thời, nhưng việc sử dụng lâu dài thường đi kèm với căng thẳng, lo âu,
     # và các rối loạn tâm thần. Ngoài ra, những người hút thuốc thường có xu hướng sử dụng thuốc lá như một cách đối phó
     # với áp lực, điều này có thể làm tình trạng tâm lý xấu đi theo thời gian.
-    if row['Smoking Status'] == 'Current':
-        risk_score += 1
+    if (data['Smoking Status'] == 'Current').any():
+        risk_scores[data['Smoking Status'] == 'Current'] += 1
 
     # Tiền sử bệnh tâm lý
-    if row['History of Mental Illness'] == 'Yes':
-        risk_score += 1
+    if (data['History of Mental Illness'] == 'Yes').any():
+        risk_scores[data['History of Mental Illness'] == 'Yes'] += 1
     
     # Bệnh lý mãn tính
-    if row['Chronic Medical Conditions'] == 'Yes':
-        risk_score += 1
+    if (data['Chronic Medical Conditions'] == 'Yes').any():
+        risk_scores[data['Chronic Medical Conditions'] == 'Yes'] += 1
     
     # Ngủ kém (Poor sleep quality)
     # Lý do: Giấc ngủ chất lượng kém hoặc thiếu ngủ có liên hệ trực tiếp với nguy cơ trầm cảm cao hơn.
     # Nó làm giảm khả năng điều chỉnh cảm xúc, gây mệt mỏi kéo dài và suy giảm hiệu suất trong cuộc sống.
     # Người bị rối loạn giấc ngủ thường dễ rơi vào vòng xoáy tiêu cực, từ đó làm tăng nguy cơ trầm cảm.
-    if row['Sleep Patterns'] == 'Poor':
-        risk_score += 1
+    if (data['Sleep Patterns'] == 'Poor').any():
+        risk_scores[data['Sleep Patterns'] == 'Poor'] += 1
         
     # Kiểm tra tình trạng thất nghiệp (Unemployed)
     # Lý do:
     # - Thất nghiệp là một yếu tố nguy cơ lớn cho trầm cảm do áp lực tài chính, cảm giác mất giá trị bản thân và cô lập xã hội.
     # - Nhiều nghiên cứu cho thấy người thất nghiệp có nguy cơ trầm cảm cao hơn, đặc biệt nếu tình trạng này kéo dài.
-    if row['Employment Status'] == 'Unemployed':
-        risk_score += 1
+    if (data['Employment Status'] == 'Unemployed').any():
+        risk_scores[data['Employment Status'] == 'Unemployed'] += 1
 
     # Thói quen uống rượu bia (Alcohol Consumption)
     # Lý do:
@@ -208,8 +208,8 @@ def predict_depression_risk(row):
     #   dẫn đến nguy cơ cao mắc các vấn đề về sức khỏe tâm thần như trầm cảm và lo âu.
     # - Rượu bia cũng có thể làm giảm khả năng đối phó với căng thẳng, gia tăng các cảm giác tiêu cực và dẫn đến cô lập xã hội.
     # - Những người uống rượu bia quá mức có thể gặp khó khăn trong việc duy trì các mối quan hệ và công việc, do đó gia tăng nguy cơ trầm cảm.
-    if row['Alcohol Consumption'] == 'High':
-        risk_score += 1
+    if (data['Alcohol Consumption'] == 'High').any():
+        risk_scores[data['Alcohol Consumption'] == 'High'] += 1
 
     # Thói quen ăn uống không lành mạnh (Dietary Habits)
     # Lý do:
@@ -219,8 +219,8 @@ def predict_depression_risk(row):
     #   và khả năng đối phó với căng thẳng.
     # - Những người có chế độ ăn không lành mạnh có thể cảm thấy mệt mỏi, thiếu năng lượng, và có ít động lực hơn trong cuộc sống,
     #   điều này làm tăng cảm giác thất bại và cô đơn, góp phần vào sự phát triển của trầm cảm.
-    if row['Dietary Habits'] == 'Unhealthy':
-        risk_score += 1
+    if (data['Dietary Habits'] == 'Unhealthy').any():
+        risk_scores[data['Dietary Habits'] == 'Unhealthy'] += 1
 
     # Tiền sử lạm dụng chất kích thích (History of Substance Abuse)
     # Lý do:
@@ -230,8 +230,8 @@ def predict_depression_risk(row):
     #   rối loạn cảm xúc và cảm giác trống rỗng, tất cả đều có thể dẫn đến trầm cảm.
     # - Lạm dụng chất kích thích còn có thể làm giảm khả năng xây dựng các mối quan hệ xã hội lành mạnh và duy trì công việc,
     #   dẫn đến cô lập, cảm giác vô giá trị và tăng khả năng mắc trầm cảm.
-    if row['History of Substance Abuse'] == 'Yes':
-        risk_score += 1
+    if (data['History of Substance Abuse'] == 'Yes').any():
+        risk_scores[data['History of Substance Abuse'] == 'Yes'] += 1
 
     # Tiền sử gia đình bị trầm cảm (Family History of Depression)
     # Lý do:
@@ -240,20 +240,17 @@ def predict_depression_risk(row):
     # - Các gen liên quan đến cảm xúc, stress và các phản ứng sinh lý trong cơ thể có thể di truyền, làm tăng khả năng mắc trầm cảm.
     # - Bên cạnh yếu tố di truyền, những người có gia đình bị trầm cảm có thể dễ bị ảnh hưởng bởi các yếu tố môi trường như căng thẳng gia đình,
     #   thiếu hỗ trợ tâm lý và các trải nghiệm tiêu cực trong cuộc sống.
-    if row['Family History of Depression'] == 'Yes':
-        risk_score += 1
+    if (data['Family History of Depression'] == 'Yes').any():
+        risk_scores[data['Family History of Depression'] == 'Yes'] += 1
 
     # Phân loại mức độ trầm cảm dựa trên điểm số
-    if risk_score >= 8:
-        return 'Very High'
-    elif risk_score >= 6:
-        return 'High'
-    elif risk_score >= 4:
-        return 'Medium'
-    elif risk_score >= 2:
-        return 'Low'
-    else:
-        return 'Very Low'
+    depression_risk = pd.Series(np.select(
+        [risk_scores >= 8, risk_scores >= 6, risk_scores >= 4, risk_scores >= 2], 
+        ['Very High', 'High', 'Medium', 'Low'], 
+        default='Very Low'
+    ))
+
+    return depression_risk
 
 # ----- Kết quả -----
 
@@ -281,16 +278,18 @@ cleaned_data = fill_missing_values(cleaned_data)
 
 # ----- Bước 3: Phát sinh dữ liệu mới -----
 # Tạo cột "Depression Risk" - Đây là cột dự đoán xem một người có khả năng dẫn đến trầm cảm hay không dựa trên các điều kiện khách quan
-# Áp dụng hàm dự đoán mức độ trầm cảm vào từng dòng dữ liệu
-data['Depression Risk'] = data.apply(predict_depression_risk, axis=1)
+# Áp dụng hàm dự đoán mức độ trầm cảm cho toàn bộ dữ liệu (dùng vectorized function thay vì apply từng dòng)
+data['Depression Risk'] = predict_depression_risk_vectorized(data)
 
 # Thông tin sau khi làm sạch và thêm cột "Depression Risk"
 print("\nDữ liệu sau khi làm sạch và thêm cột Depression Risk:\n")
-print(data[['Name','Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'History of Mental Illness', 'Chronic Medical Conditions', 'Sleep Patterns', 'Depression Risk']].head())
+print(data[['Name','Age', 'Income', 'Physical Activity Level', 'Smoking Status', 'History of Mental Illness', 
+            'Chronic Medical Conditions', 'Sleep Patterns', 'Depression Risk']].head())
 
 # Lưu dữ liệu đã làm sạch vào file mới
 output_path = 'cleaned_and_predicted_data.csv'
 data.to_csv(output_path, index=False)
 print(f"\nDữ liệu đã được lưu vào file '{output_path}'.")
+
 
 
