@@ -2,7 +2,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from crud.CRUD import read_csv_data, paginate_data, create_data, update_data, delete_records
 from tool.tool import sort_data, filter_data
+from visualization.visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 CSV_FILE = "cleaned_and_predicted_data.csv"
 
@@ -57,6 +61,7 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Xóa dữ liệu", command=self.delete_selected_records).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Sắp xếp", command=self.open_sort_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Xem biểu đồ", command=self.view_chart).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
 
@@ -453,6 +458,71 @@ class DataApp:
         self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
         messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
 
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Thêm import này
+
+    def view_chart(self):
+        """
+        Mở cửa sổ để hiển thị biểu đồ, bao gồm cả biểu đồ từ 'visualization.py'.
+        """
+        def plot_chart():
+            """
+            Vẽ biểu đồ cho cột đã chọn từ dữ liệu trong DataFrame hoặc từ các hàm trong visualization.py.
+            """
+            selected_chart = chart_combobox.get()
+            
+            if selected_chart == "Biểu đồ phân bố tuổi":
+                plot_age_distribution(self.data)
+            elif selected_chart == "Biểu đồ học vấn và trầm cảm":
+                plot_education_vs_depression(self.data)
+            elif selected_chart == "Biểu đồ việc làm và trầm cảm":
+                plot_employment_vs_depression(self.data)
+            else:
+                # Vẽ biểu đồ từ dữ liệu trong DataFrame nếu không phải từ visualization.py
+                column = column_combobox.get()
+                if not column:
+                    messagebox.showerror("Lỗi", "Vui lòng chọn một cột để vẽ biểu đồ.")
+                    return
+
+                # Tạo figure cho biểu đồ
+                fig, ax = plt.subplots(figsize=(8, 6))
+
+                # Kiểm tra kiểu dữ liệu của cột
+                if self.data[column].dtype == 'object':  # Dữ liệu phân loại (categorical)
+                    value_counts = self.data[column].value_counts()
+                    value_counts.plot(kind='bar', ax=ax, color='skyblue')
+                    ax.set_title(f"Biểu đồ cột của '{column}'")
+                    ax.set_xlabel(column)
+                    ax.set_ylabel('Số lượng')
+                else:  # Dữ liệu số (numerical)
+                    self.data[column].plot(kind='hist', ax=ax, color='skyblue', edgecolor='black', bins=20)
+                    ax.set_title(f"Biểu đồ phân bố của '{column}'")
+                    ax.set_xlabel(column)
+                    ax.set_ylabel('Tần suất')
+
+                # Tạo canvas cho biểu đồ
+                canvas = FigureCanvasTkAgg(fig, master=chart_window)  # Tạo canvas cho figure
+                canvas.draw()
+                canvas.get_tk_widget().pack()
+
+        # Cửa sổ hiển thị biểu đồ
+        chart_window = tk.Toplevel(self.root)
+        chart_window.title("Xem Biểu đồ")
+        chart_window.geometry("500x600")
+
+        ttk.Label(chart_window, text="Chọn biểu đồ:").pack(pady=10)
+        chart_combobox = ttk.Combobox(chart_window, values=[
+            "Biểu đồ phân bố tuổi", 
+            "Biểu đồ học vấn và trầm cảm", 
+            "Biểu đồ việc làm và trầm cảm",
+            *self.data.columns
+        ], )
+        chart_combobox.pack(pady=5)
+
+        ttk.Label(chart_window, text="Chọn cột để vẽ biểu đồ:").pack(pady=10)
+        column_combobox = ttk.Combobox(chart_window, values=list(self.data.columns), state="readonly")
+        column_combobox.pack(pady=5)
+
+        ttk.Button(chart_window, text="Vẽ biểu đồ", command=plot_chart).pack(pady=10)
 
     def prev_page(self):
         if self.current_page > 1:
