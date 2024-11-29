@@ -74,77 +74,70 @@ def detect_outliers(df):
 
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Loại bỏ các giá trị bất thường từ DataFrame dựa trên các điều kiện hợp lệ.
+    Thay thế các giá trị bất thường bằng NaN trong DataFrame dựa trên các điều kiện hợp lệ.
 
     Args:
-        data (pd.DataFrame): DataFrame cần loại bỏ giá trị bất thường.
+        data (pd.DataFrame): DataFrame cần xử lý.
 
     Returns:
-        pd.DataFrame: DataFrame đã loại bỏ các giá trị bất thường. 
+        pd.DataFrame: DataFrame đã thay thế giá trị bất thường bằng NaN.
     """
-    # Điều kiện lọc từng cột
-    conditions = (
-        (data['Age'] >= 18) & (data['Age'] <= 80) &
-        (data['Income'] >= 0) &
-        (data['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active'])) &
-        (data['Smoking Status'].isin(['Non-smoker', 'Former', 'Current'])) &
-        (data['Employment Status'].isin(['Employed', 'Unemployed'])) &
-        (data['Alcohol Consumption'].isin(['Low', 'Moderate', 'High'])) &
-        (data['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy'])) &
-        (data['Sleep Patterns'].isin(['Poor', 'Good', 'Fair'])) &
-        (data['History of Mental Illness'].isin(['Yes', 'No'])) &
-        (data['Family History of Depression'].isin(['Yes', 'No'])) &
-        (data['Chronic Medical Conditions'].isin(['Yes', 'No'])) &
-        (data['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed'])) &
-        (data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])) &
-        (data['Number of Children'] >= 0)
-    )
-    
-    # Lọc DataFrame bằng các điều kiện
-    data_cleaned = data[conditions]
-    
-    return data_cleaned
+    # Điều kiện lọc từng cột, thay thế giá trị không hợp lệ bằng NaN
+    conditions = {
+        'Age': (data['Age'] < 18) | (data['Age'] > 80),
+        'Income': data['Income'] < 0,
+        'Physical Activity Level': ~data['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active']),
+        'Smoking Status': ~data['Smoking Status'].isin(['Non-smoker', 'Former', 'Current']),
+        'Employment Status': ~data['Employment Status'].isin(['Employed', 'Unemployed']),
+        'Alcohol Consumption': ~data['Alcohol Consumption'].isin(['Low', 'Moderate', 'High']),
+        'Dietary Habits': ~data['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy']),
+        'Sleep Patterns': ~data['Sleep Patterns'].isin(['Poor', 'Good', 'Fair']),
+        'History of Mental Illness': ~data['History of Mental Illness'].isin(['Yes', 'No']),
+        'Family History of Depression': ~data['Family History of Depression'].isin(['Yes', 'No']),
+        'Chronic Medical Conditions': ~data['Chronic Medical Conditions'].isin(['Yes', 'No']),
+        'Marital Status': ~data['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed']),
+        'Education Level': ~data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"]),
+        'Number of Children': data['Number of Children'] < 0
+    }
+
+    # Thay thế giá trị không hợp lệ bằng NaN
+    for column, condition in conditions.items():
+        data[column] = data[column].where(~condition, np.nan)
+
+    return data
 
 def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Điền các giá trị thiếu trong DataFrame, tối ưu hóa hiệu suất bằng cách sử dụng các phương thức vectorized.
+    Điền các giá trị thiếu trong DataFrame và làm tròn các giá trị số về số nguyên.
     
     Args:
-        data (pd.DataFrame): DataFrame cần điền giá trị thiếu.
+        data (pd.DataFrame): DataFrame cần điền giá trị thiếu và làm tròn các giá trị số.
         
     Returns:
-        pd.DataFrame: DataFrame đã được điền giá trị thiếu.
+        pd.DataFrame: DataFrame đã được điền giá trị thiếu và làm tròn các giá trị số.
     """
     # Xử lý các cột số
     num_columns = data.select_dtypes(include=['int64', 'float64']).columns
     for col in num_columns:
-        if col == 'Age':
-            data[col].fillna(data[col].mean())
-        elif col == 'Income':
-            data[col].fillna(data[col].mean())
-        elif col == 'Number of Children':
-            # Điều kiện điền giá trị thiếu cho 'Number of Children' dựa trên 'Age'
-            data[col] = np.select(
-                [data['Age'] < 18, data['Age'] >= 18],
-                [0, 1],
-                default=data[col]  # Giữ nguyên giá trị nếu không thỏa mãn điều kiện
-            )
-            # Điền NaN còn lại bằng giá trị trung bình (nếu có)
-            data[col].fillna(data[col].mean())
+        # Điền giá trị thiếu bằng trung bình hoặc các phương thức khác
+        if col == 'Number of Children':
+            data[col] = data[col].fillna(data[col].mean())  # Điền NaN bằng giá trị trung bình
         else:
-            # Điền giá trị thiếu trong các cột số khác bằng trung bình
-            data[col].fillna(data[col].mean())
+            data[col] = data[col].fillna(data[col].mean())
+        
+        # Làm tròn các giá trị số trong các cột này thành số nguyên
+        data[col] = data[col].round().astype(int)  # Làm tròn và chuyển thành số nguyên
     
     # Xử lý các cột chuỗi
     str_columns = data.select_dtypes(include=['object']).columns
     for col in str_columns:
         if col in ['History of Mental Illness', 'History of Substance Abuse', 'Family History of Depression', 'Chronic Medical Conditions']:
             # Điền 'No' cho các cột này
-            data[col].fillna('No')
+            data[col] = data[col].fillna('No')
         else:
-            # Điền ngẫu nhiên giá trị không thiếu trong cột
-            valid_values = data[col].dropna().unique()
-            data[col].fillna(pd.Series(np.random.choice(valid_values, size=data[col].isna().sum())))
+            # Điền giá trị phổ biến (mode) cho các cột chuỗi
+            most_common_value = data[col].mode()[0]
+            data[col] = data[col].fillna(most_common_value)
     
     return data
 
