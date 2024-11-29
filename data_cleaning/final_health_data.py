@@ -34,67 +34,81 @@ def describe_valid_values(df):
         else:
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
+def check_outlier_conditions(df: pd.DataFrame, col_conditions: dict) -> dict:
+    """
+    Hàm chung để kiểm tra các điều kiện bất thường (outlier) cho các cột.
+    
+    Args:
+        df (pd.DataFrame): DataFrame cần kiểm tra.
+        col_conditions (dict): Từ điển chứa tên cột và điều kiện kiểm tra bất thường.
+        
+    Returns:
+        dict: Từ điển chứa các cột có giá trị bất thường.
+    """
+    issues = {}
+    for col, condition in col_conditions.items():
+        if condition.any():
+            issues[col] = f"Cột {col} có giá trị bất thường."
+    return issues
+
 def detect_outliers(df: pd.DataFrame) -> dict:
     """
     Phát hiện giá trị bất thường trong dữ liệu bằng cách áp dụng vector hóa.
-
+    
     Args:
         df (pd.DataFrame): Dữ liệu cần kiểm tra.
-
+    
     Returns:
         dict: Từ điển chứa các cột có giá trị bất thường và mô tả vấn đề.
     """
-    issues = {}
-
-    # Kiểm tra các cột số với các điều kiện vector hóa
+    # Điều kiện cho các cột số
     num_conditions = {
         'Age': (df['Age'] < 18) | (df['Age'] > 80),
         'Income': df['Income'] < 0,
         'Number of Children': df['Number of Children'] < 0
     }
 
-    # Kiểm tra các cột số
-    for col, condition in num_conditions.items():
-        if condition.any():  # Chỉ cần kiểm tra nếu có bất kỳ giá trị nào thỏa mãn điều kiện
-            issues[col] = f"{col} có giá trị bất thường."
-
-    # Kiểm tra các cột phân loại (categorical columns) với vector hóa
+    # Điều kiện cho các cột phân loại
     cat_conditions = {
-        'Physical Activity Level': ['Sedentary', 'Moderate', 'Active'],
-        'Smoking Status': ['Non-smoker', 'Former', 'Current'],
-        'Employment Status': ['Employed', 'Unemployed'],
-        'Alcohol Consumption': ['Low', 'Moderate', 'High'],
-        'Dietary Habits': ['Healthy', 'Moderate', 'Unhealthy'],
-        'Sleep Patterns': ['Poor', 'Good', 'Fair'],
-        'History of Mental Illness': ['Yes', 'No'],
-        'History of Substance Abuse': ['Yes', 'No'],
-        'Family History of Depression': ['Yes', 'No'],
-        'Chronic Medical Conditions': ['Yes', 'No'],
-        'Marital Status': ['Single', 'Married', 'Divorced', 'Widowed'],
-        'Education Level': ['High School', 'Bachelor\'s Degree', 'Master\'s Degree', 'Associate Degree', 'PhD']
+        'Physical Activity Level': ~df['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active']),
+        'Smoking Status': ~df['Smoking Status'].isin(['Non-smoker', 'Former', 'Current']),
+        'Employment Status': ~df['Employment Status'].isin(['Employed', 'Unemployed']),
+        'Alcohol Consumption': ~df['Alcohol Consumption'].isin(['Low', 'Moderate', 'High']),
+        'Dietary Habits': ~df['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy']),
+        'Sleep Patterns': ~df['Sleep Patterns'].isin(['Poor', 'Good', 'Fair']),
+        'History of Mental Illness': ~df['History of Mental Illness'].isin(['Yes', 'No']),
+        'History of Substance Abuse': ~df['History of Substance Abuse'].isin(['Yes', 'No']),
+        'Family History of Depression': ~df['Family History of Depression'].isin(['Yes', 'No']),
+        'Chronic Medical Conditions': ~df['Chronic Medical Conditions'].isin(['Yes', 'No']),
+        'Marital Status': ~df['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed']),
+        'Education Level': ~df['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])
     }
 
-    # Kiểm tra các cột phân loại
-    for col, valid_values in cat_conditions.items():
-        if (~df[col].isin(valid_values)).any():  # Kiểm tra nếu có giá trị bất hợp lệ
-            issues[col] = f"{col} có giá trị bất thường."
+    issues = {}
+    issues.update(check_outlier_conditions(df, num_conditions))  # Kiểm tra các cột số
+    issues.update(check_outlier_conditions(df, cat_conditions))  # Kiểm tra các cột phân loại
 
     return issues
 
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
     Thay thế các giá trị bất thường bằng NaN trong DataFrame dựa trên các điều kiện hợp lệ.
-
+    
     Args:
         data (pd.DataFrame): DataFrame cần xử lý.
-
+    
     Returns:
         pd.DataFrame: DataFrame đã thay thế giá trị bất thường bằng NaN.
     """
-    # Điều kiện lọc từng cột, thay thế giá trị không hợp lệ bằng NaN
-    conditions = {
+    # Điều kiện cho các cột số
+    num_conditions = {
         'Age': (data['Age'] < 18) | (data['Age'] > 80),
         'Income': data['Income'] < 0,
+        'Number of Children': data['Number of Children'] < 0
+    }
+
+    # Điều kiện cho các cột phân loại
+    cat_conditions = {
         'Physical Activity Level': ~data['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active']),
         'Smoking Status': ~data['Smoking Status'].isin(['Non-smoker', 'Former', 'Current']),
         'Employment Status': ~data['Employment Status'].isin(['Employed', 'Unemployed']),
@@ -105,12 +119,11 @@ def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
         'Family History of Depression': ~data['Family History of Depression'].isin(['Yes', 'No']),
         'Chronic Medical Conditions': ~data['Chronic Medical Conditions'].isin(['Yes', 'No']),
         'Marital Status': ~data['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed']),
-        'Education Level': ~data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"]),
-        'Number of Children': data['Number of Children'] < 0
+        'Education Level': ~data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])
     }
 
-    # Thay thế giá trị không hợp lệ bằng NaN
-    for column, condition in conditions.items():
+    # Áp dụng các điều kiện để thay thế giá trị không hợp lệ bằng NaN
+    for column, condition in {**num_conditions, **cat_conditions}.items():
         data[column] = data[column].where(~condition, np.nan)
 
     return data
@@ -128,26 +141,20 @@ def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
     # Xử lý các cột số
     num_columns = data.select_dtypes(include=['int64', 'float64']).columns
     for col in num_columns:
-        # Điền giá trị thiếu bằng trung bình hoặc các phương thức khác
-        if col == 'Number of Children':
-            data[col] = data[col].fillna(data[col].mean())  # Điền NaN bằng giá trị trung bình
-        else:
-            data[col] = data[col].fillna(data[col].mean())
-        
-        # Làm tròn các giá trị số trong các cột này thành số nguyên
-        data[col] = data[col].round().astype(int)  # Làm tròn và chuyển thành số nguyên
+        # Điền giá trị thiếu bằng giá trị trung bình cho các cột số
+        data[col] = data[col].fillna(data[col].mean())
+        # Làm tròn các giá trị số thành số nguyên
+        data[col] = data[col].round().astype(int)
     
     # Xử lý các cột chuỗi
     str_columns = data.select_dtypes(include=['object']).columns
     for col in str_columns:
         if col in ['History of Mental Illness', 'History of Substance Abuse', 'Family History of Depression', 'Chronic Medical Conditions']:
-            # Điền 'No' cho các cột này
-            data[col] = data[col].fillna('No')
+            data[col] = data[col].fillna('No')  # Điền 'No' cho các cột này
         else:
-            # Điền giá trị phổ biến (mode) cho các cột chuỗi
             most_common_value = data[col].mode()[0]
-            data[col] = data[col].fillna(most_common_value)
-    
+            data[col] = data[col].fillna(most_common_value)  # Điền giá trị phổ biến cho các cột chuỗi
+
     return data
 
 def predict_depression_risk_vectorized(data: pd.DataFrame) -> pd.Series:
