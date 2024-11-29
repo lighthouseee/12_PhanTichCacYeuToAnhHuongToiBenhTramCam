@@ -34,9 +34,9 @@ def describe_valid_values(df):
         else:
             print(f"  Không xác định được kiểu dữ liệu hợp lệ.")
         
-def detect_outliers(df):
+def detect_outliers(df: pd.DataFrame) -> dict:
     """
-    Phát hiện giá trị bất thường trong dữ liệu.
+    Phát hiện giá trị bất thường trong dữ liệu bằng cách áp dụng vector hóa.
 
     Args:
         df (pd.DataFrame): Dữ liệu cần kiểm tra.
@@ -45,31 +45,40 @@ def detect_outliers(df):
         dict: Từ điển chứa các cột có giá trị bất thường và mô tả vấn đề.
     """
     issues = {}
-    
-    # Định nghĩa các điều kiện kiểm tra cho mỗi cột
-    check_conditions = {
-        'Age': lambda x: (x < 18) | (x > 80),
-        'Income': lambda x: x < 0,
-        'Number of Children': lambda x: x < 0,
-        'Physical Activity Level': lambda x: ~x.isin(['Sedentary', 'Moderate', 'Active']),
-        'Smoking Status': lambda x: ~x.isin(['Non-smoker', 'Former', 'Current']),
-        'Employment Status': lambda x: ~x.isin(['Employed', 'Unemployed']),
-        'Alcohol Consumption': lambda x: ~x.isin(['Low', 'Moderate', 'High']),
-        'Dietary Habits': lambda x: ~x.isin(['Healthy', 'Moderate', 'Unhealthy']),
-        'Sleep Patterns': lambda x: ~x.isin(['Poor', 'Good', 'Fair']),
-        'History of Mental Illness': lambda x: ~x.isin(['Yes', 'No']),
-        'History of Substance Abuse': lambda x: ~x.isin(['Yes', 'No']),
-        'Family History of Depression': lambda x: ~x.isin(['Yes', 'No']),
-        'Chronic Medical Conditions': lambda x: ~x.isin(['Yes', 'No']),
-        'Marital Status': lambda x: ~x.isin(['Single', 'Married', 'Divorced', 'Widowed']),
-        'Education Level': lambda x: ~x.isin(['High School', 'Bachelor\'s Degree', 'Master\'s Degree', 'Associate Degree', 'PhD'])
+
+    # Kiểm tra các cột số với các điều kiện vector hóa
+    num_conditions = {
+        'Age': (df['Age'] < 18) | (df['Age'] > 80),
+        'Income': df['Income'] < 0,
+        'Number of Children': df['Number of Children'] < 0
     }
-    
-    # Duyệt qua từng cột và kiểm tra điều kiện
-    for col, condition in check_conditions.items():
-        if condition(df[col]).any():
+
+    # Kiểm tra các cột số
+    for col, condition in num_conditions.items():
+        if condition.any():  # Chỉ cần kiểm tra nếu có bất kỳ giá trị nào thỏa mãn điều kiện
             issues[col] = f"{col} có giá trị bất thường."
-    
+
+    # Kiểm tra các cột phân loại (categorical columns) với vector hóa
+    cat_conditions = {
+        'Physical Activity Level': ['Sedentary', 'Moderate', 'Active'],
+        'Smoking Status': ['Non-smoker', 'Former', 'Current'],
+        'Employment Status': ['Employed', 'Unemployed'],
+        'Alcohol Consumption': ['Low', 'Moderate', 'High'],
+        'Dietary Habits': ['Healthy', 'Moderate', 'Unhealthy'],
+        'Sleep Patterns': ['Poor', 'Good', 'Fair'],
+        'History of Mental Illness': ['Yes', 'No'],
+        'History of Substance Abuse': ['Yes', 'No'],
+        'Family History of Depression': ['Yes', 'No'],
+        'Chronic Medical Conditions': ['Yes', 'No'],
+        'Marital Status': ['Single', 'Married', 'Divorced', 'Widowed'],
+        'Education Level': ['High School', 'Bachelor\'s Degree', 'Master\'s Degree', 'Associate Degree', 'PhD']
+    }
+
+    # Kiểm tra các cột phân loại
+    for col, valid_values in cat_conditions.items():
+        if (~df[col].isin(valid_values)).any():  # Kiểm tra nếu có giá trị bất hợp lệ
+            issues[col] = f"{col} có giá trị bất thường."
+
     return issues
 
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
