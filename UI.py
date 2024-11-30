@@ -475,13 +475,16 @@ class DataApp:
             Vẽ biểu đồ cho cột đã chọn từ dữ liệu trong DataFrame hoặc từ các hàm trong visualization.py.
             """
             selected_chart = chart_combobox.get()
-            
+            file_path_age_education = 'filtered_depression_data.csv'
+            file_path_employment = 'cleaned_and_predicted_data.csv'
+            self.data_age_education = pd.read_csv(file_path_age_education)
+            self.data_employment = pd.read_csv(file_path_employment)
             if selected_chart == "Biểu đồ phân bố tuổi":
-                plot_age_distribution(self.data)
+                plot_age_distribution(self.data_age_education)
             elif selected_chart == "Biểu đồ học vấn và trầm cảm":
-                plot_education_vs_depression(self.data)
+                plot_education_vs_depression(self.data_age_education)
             elif selected_chart == "Biểu đồ việc làm và trầm cảm":
-                plot_employment_vs_depression(self.data)
+                plot_employment_vs_depression(self.data_employment)
             else:
                 return
 
