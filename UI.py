@@ -259,13 +259,20 @@ class DataApp:
         errors = []
         for col, value in updated_data.items():
             if col == "Age":
-                if not str(value).isdigit() or not (0 <= int(value) <= 120):
-                    errors.append(f"Trường '{col}' phải là số từ 0 đến 120.")
+                if not str(value).isdigit() or not (18 <= int(value) <= 80):
+                    errors.append(f"Trường '{col}' phải là số từ 18 đến 80.")
             elif col == "Income":
                 try:
                     value = float(value)
                     if value < 0:
                         errors.append(f"Trường '{col}' phải là số không âm.")
+                except ValueError:
+                    errors.append(f"Trường '{col}' phải là số.")
+            elif col == "Number of Children":
+                try:
+                    value = foat(value)
+                    if value < 0:
+                        errors.append(f"Trường '{col}' phải là số không âm." )
                 except ValueError:
                     errors.append(f"Trường '{col}' phải là số.")
             elif col in VALID_VALUES and value not in VALID_VALUES[col]:
