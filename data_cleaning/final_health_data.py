@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+from time import time
 
+s_time = time()
 # Đọc file CSV
 file_path = 'depression_data.csv'  
 data = pd.read_csv(file_path)
@@ -299,6 +301,8 @@ print(data[['Name','Age', 'Income', 'Physical Activity Level', 'Smoking Status',
 output_path = 'cleaned_and_predicted_data.csv'
 data.to_csv(output_path, index=False)
 print(f"\nDữ liệu đã được lưu vào file '{output_path}'.")
-
+e_time = time()
+t = e_time - s_time
+print(f"Thời gian thực thi {t:.2f} giây")
 
 

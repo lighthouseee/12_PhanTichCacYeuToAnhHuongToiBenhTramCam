@@ -7,7 +7,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-
 CSV_FILE = "cleaned_and_predicted_data.csv"
 
 VALID_VALUES = {
@@ -549,7 +548,9 @@ class DataApp:
         except ValueError:
             messagebox.showerror("Lỗi", "Số trang phải là số hợp lệ.")
 
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = DataApp(root)
     root.mainloop()
+
