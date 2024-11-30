@@ -270,7 +270,7 @@ class DataApp:
                     errors.append(f"Trường '{col}' phải là số.")
             elif col == "Number of Children":
                 try:
-                    value = foat(value)
+                    value = float(value)
                     if value < 0:
                         errors.append(f"Trường '{col}' phải là số không âm." )
                 except ValueError:
