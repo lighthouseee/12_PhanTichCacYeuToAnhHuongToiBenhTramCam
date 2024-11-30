@@ -118,12 +118,9 @@ class DataApp:
             confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa dữ liệu này?")
             if confirm:
                 try:
-                    # Gọi hàm delete_records từ CRUD
                     self.data = delete_records(self.data, [record_index])
-
                     # Cập nhật Treeview
                     self.update_treeview()
-
                     messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
                 except ValueError as e:
                     messagebox.showerror("Lỗi", str(e))
@@ -188,7 +185,6 @@ class DataApp:
             except ValueError as e:
                 messagebox.showerror("Lỗi", str(e))
 
-
     def view_data(self):
         """
         Hiển thị dữ liệu trong Treeview dựa trên số dòng mỗi trang.
@@ -219,8 +215,11 @@ class DataApp:
 
         ttk.Button(view_window, text="Xác nhận", command=set_page_size).pack(pady=10)
 
-
+    
     def create_treeview_with_scrollbars(self, parent_frame, columns, height=15):
+        """
+        Tạo thanh cuộn
+        """
         tree_frame = ttk.Frame(parent_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True)
         
@@ -477,32 +476,28 @@ class DataApp:
             elif selected_chart == "Biểu đồ việc làm và trầm cảm":
                 plot_employment_vs_depression(self.data)
             else:
-                # Vẽ biểu đồ từ dữ liệu trong DataFrame nếu không phải từ visualization.py
-                column = column_combobox.get()
-                if not column:
-                    messagebox.showerror("Lỗi", "Vui lòng chọn một cột để vẽ biểu đồ.")
-                    return
+                return
 
-                # Tạo figure cho biểu đồ
-                fig, ax = plt.subplots(figsize=(8, 6))
+            # # Tạo figure cho biểu đồ
+            # fig, ax = plt.subplots(figsize=(8, 6))
 
-                # Kiểm tra kiểu dữ liệu của cột
-                if self.data[column].dtype == 'object':  # Dữ liệu phân loại (categorical)
-                    value_counts = self.data[column].value_counts()
-                    value_counts.plot(kind='bar', ax=ax, color='skyblue')
-                    ax.set_title(f"Biểu đồ cột của '{column}'")
-                    ax.set_xlabel(column)
-                    ax.set_ylabel('Số lượng')
-                else:  # Dữ liệu số (numerical)
-                    self.data[column].plot(kind='hist', ax=ax, color='skyblue', edgecolor='black', bins=20)
-                    ax.set_title(f"Biểu đồ phân bố của '{column}'")
-                    ax.set_xlabel(column)
-                    ax.set_ylabel('Tần suất')
+            #     # Kiểm tra kiểu dữ liệu của cột
+            # if self.data[column].dtype == 'object':  # Dữ liệu phân loại (categorical)
+            #     value_counts = self.data[column].value_counts()
+            #     value_counts.plot(kind='bar', ax=ax, color='skyblue')
+            #     ax.set_title(f"Biểu đồ cột của '{column}'")
+            #     ax.set_xlabel(column)
+            #     ax.set_ylabel('Số lượng')
+            # else:  # Dữ liệu số (numerical)
+            #     self.data[column].plot(kind='hist', ax=ax, color='skyblue', edgecolor='black', bins=20)
+            #     ax.set_title(f"Biểu đồ phân bố của '{column}'")
+            #     ax.set_xlabel(column)
+            #     ax.set_ylabel('Tần suất')
 
-                # Tạo canvas cho biểu đồ
-                canvas = FigureCanvasTkAgg(fig, master=chart_window)  # Tạo canvas cho figure
-                canvas.draw()
-                canvas.get_tk_widget().pack()
+            # # Tạo canvas cho biểu đồ
+            # canvas = FigureCanvasTkAgg(fig, master=chart_window)  
+            # canvas.draw()
+            # canvas.get_tk_widget().pack()
 
         # Cửa sổ hiển thị biểu đồ
         chart_window = tk.Toplevel(self.root)
@@ -514,13 +509,12 @@ class DataApp:
             "Biểu đồ phân bố tuổi", 
             "Biểu đồ học vấn và trầm cảm", 
             "Biểu đồ việc làm và trầm cảm",
-            *self.data.columns
         ], )
         chart_combobox.pack(pady=5)
 
-        ttk.Label(chart_window, text="Chọn cột để vẽ biểu đồ:").pack(pady=10)
-        column_combobox = ttk.Combobox(chart_window, values=list(self.data.columns), state="readonly")
-        column_combobox.pack(pady=5)
+        # ttk.Label(chart_window, text="Chọn cột để vẽ biểu đồ:").pack(pady=10)
+        # column_combobox = ttk.Combobox(chart_window, values=list(self.data.columns), state="readonly")
+        # column_combobox.pack(pady=5)
 
         ttk.Button(chart_window, text="Vẽ biểu đồ", command=plot_chart).pack(pady=10)
 
