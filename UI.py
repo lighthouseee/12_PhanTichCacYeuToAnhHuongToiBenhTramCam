@@ -321,6 +321,13 @@ class DataApp:
                         errors.append(f"Trường '{col}' phải là số từ 0 đến 120.")
                     else:
                         data[col] = int(value)
+                elif col == "Number of Children":
+                    try:
+                        value = float(value)
+                        if value < 0:
+                            errors.append(f"Trường '{col}' phải là số không âm." )
+                    except ValueError:
+                        errors.append(f"Trường '{col}' phải là số.")
                 elif col == "Income":
                     if not value.replace('.', '', 1).isdigit() or float(value) < 0:
                         errors.append(f"Trường '{col}' phải là số không âm.")
