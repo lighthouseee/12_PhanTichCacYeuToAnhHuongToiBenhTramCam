@@ -5,37 +5,6 @@ import numpy as np
 file_path = 'dataset\\depression_data.csv'  
 data = pd.read_csv(file_path)
 
-def detect_outliers(df: pd.DataFrame) -> dict:
-    """
-    Phát hiện giá trị bất thường trong dữ liệu.
-    """
-    num_conditions = {
-        'Age': (df['Age'] < 18) | (df['Age'] > 80),
-        'Income': df['Income'] < 0,
-        'Number of Children': df['Number of Children'] < 0
-    }
-
-    cat_conditions = {
-        'Physical Activity Level': ~df['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active']),
-        'Smoking Status': ~df['Smoking Status'].isin(['Non-smoker', 'Former', 'Current']),
-        'Employment Status': ~df['Employment Status'].isin(['Employed', 'Unemployed']),
-        'Alcohol Consumption': ~df['Alcohol Consumption'].isin(['Low', 'Moderate', 'High']),
-        'Dietary Habits': ~df['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy']),
-        'Sleep Patterns': ~df['Sleep Patterns'].isin(['Poor', 'Good', 'Fair']),
-        'History of Mental Illness': ~df['History of Mental Illness'].isin(['Yes', 'No']),
-        'History of Substance Abuse': ~df['History of Substance Abuse'].isin(['Yes', 'No']),
-        'Family History of Depression': ~df['Family History of Depression'].isin(['Yes', 'No']),
-        'Chronic Medical Conditions': ~df['Chronic Medical Conditions'].isin(['Yes', 'No']),
-        'Marital Status': ~df['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed']),
-        'Education Level': ~df['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])
-    }
-
-    issues = {}
-    for col, condition in {**num_conditions, **cat_conditions}.items():
-        if condition.any():
-            issues[col] = f"Cột {col} có giá trị bất thường."
-    return issues
-
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
     Thay thế các giá trị bất thường bằng NaN trong DataFrame.
@@ -67,21 +36,33 @@ def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
 
 def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Điền các giá trị thiếu trong DataFrame và làm tròn các giá trị số về số nguyên.
+    Điền các giá trị thiếu trong DataFrame.
     """
+    # Điền giá trị thiếu cho các cột số
     num_columns = data.select_dtypes(include=['int64', 'float64']).columns
     for col in num_columns:
-        data[col] = data[col].fillna(data[col].mean())
-        data[col] = data[col].round().astype(int)
-    
+        if data[col].isnull().sum() > 0:  # Chỉ xử lý nếu có giá trị thiếu
+            # Kiểm tra độ lệch (skewness)
+            if abs(data[col].skew()) > 1:  # Nếu lệch lớn, dùng median
+                data[col] = data[col].fillna(data[col].median())
+            else:  # Nếu không lệch, dùng mean
+                data[col] = data[col].fillna(data[col].mean())
+            # Không ép về int nếu dữ liệu không cần
+            if data[col].dtype in ['float64']:
+                data[col] = data[col].round(2)  # Làm tròn đến 2 chữ số thập phân
+
+    # Điền giá trị thiếu cho các cột chuỗi
     str_columns = data.select_dtypes(include=['object']).columns
     for col in str_columns:
-        if col in ['History of Mental Illness', 'History of Substance Abuse', 'Family History of Depression', 'Chronic Medical Conditions']:
-            data[col] = data[col].fillna('No')
-        else:
-            most_common_value = data[col].mode()[0]
-            data[col] = data[col].fillna(most_common_value)
-
+        if data[col].isnull().sum() > 0:  # Chỉ xử lý nếu có giá trị thiếu
+            if col in ['History of Mental Illness', 'History of Substance Abuse', 
+                       'Family History of Depression', 'Chronic Medical Conditions']:
+                data[col] = data[col].fillna('No')
+            else:
+                # Điền bằng giá trị phổ biến nhất (mode)
+                most_common_value = data[col].mode()[0]
+                data[col] = data[col].fillna(most_common_value)
+    
     return data
 
 def predict_depression_risk_vectorized(data: pd.DataFrame) -> pd.Series:
