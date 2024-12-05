@@ -83,9 +83,9 @@ def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-def predict_depression_risk_vectorized(data: pd.DataFrame) -> pd.Series:
+def predict_depression_risk(data: pd.DataFrame) -> pd.Series:
     """
-    Dự đoán mức độ trầm cảm dựa trên các yếu tố trong dữ liệu.
+    Dự đoán mức độ trầm cảm của một người dựa trên các yếu tố có liên quan trong dữ liệu.
     """
 
     # Tính điểm rủi ro cho các cột
@@ -120,11 +120,11 @@ cleaned_data = remove_outliers(data)
 cleaned_data = fill_missing_values(cleaned_data)
 
 # Tạo cột "Depression Risk"
-cleaned_data['Depression Risk'] = predict_depression_risk_vectorized(cleaned_data)
+cleaned_data['Depression Risk'] = predict_depression_risk(cleaned_data)
 
 # Lưu dữ liệu đã làm sạch vào file mới
 output_path = 'dataset\\cleaned_and_predicted_data.csv'
 cleaned_data.to_csv(output_path, index=False)
-print("ĐÃ xong")
+
 
 
