@@ -110,8 +110,8 @@ def plot_employment_vs_depression(data, save_path=None):
 # Chương trình chính
 if __name__ == "__main__":
     # Đọc dữ liệu
-    file_path_age_education = 'filtered_depression_data.csv'
-    file_path_employment = 'cleaned_and_predicted_data.csv'
+    file_path_age_education = 'dataset\\filtered_depression_data.csv'
+    file_path_employment = 'dataset\\cleaned_and_predicted_data.csv'
     data_age_education = pd.read_csv(file_path_age_education)
     data_employment = pd.read_csv(file_path_employment)
 

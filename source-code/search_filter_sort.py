@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Đường dẫn file CSV
-CSV_FILE = "cleaned_and_predicted_data.csv"
+CSV_FILE = "dataset\\cleaned_and_predicted_data.csv"
 
 # Đọc dữ liệu từ file CSV
 def read_csv_data():
