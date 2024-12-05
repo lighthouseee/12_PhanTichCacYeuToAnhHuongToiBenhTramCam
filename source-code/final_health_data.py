@@ -1,10 +1,8 @@
 import pandas as pd
 import numpy as np
-from time import time
 
-s_time = time()
 # Đọc file CSV
-file_path = 'depression_data.csv'  
+file_path = 'dataset\\depression_data.csv'  
 data = pd.read_csv(file_path)
 
 def detect_outliers(df: pd.DataFrame) -> dict:
@@ -143,9 +141,7 @@ cleaned_data = fill_missing_values(cleaned_data)
 cleaned_data['Depression Risk'] = predict_depression_risk_vectorized(cleaned_data)
 
 # Lưu dữ liệu đã làm sạch vào file mới
-output_path = 'cleaned_and_predicted_data.csv'
+output_path = 'dataset\\cleaned_and_predicted_data.csv'
 cleaned_data.to_csv(output_path, index=False)
 
-# Thời gian thực thi
-e_time = time()
-t = e_time - s_time
+
