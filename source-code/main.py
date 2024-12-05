@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
 from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
+from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -43,6 +44,7 @@ class DataApp:
         # Treeview và thanh cuộn
         self.tree_frame = ttk.Frame(root)
         self.tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.frame_data = ttk.Frame(root)
 
         self.tree, self.v_scroll, self.h_scroll = self.create_treeview_with_scrollbars(
             parent_frame=self.tree_frame, columns=list(self.data.columns), height=20
@@ -62,7 +64,8 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Xem biểu đồ", command=self.view_chart).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
+        ttk.Button(self.menu_frame, text="Làm sạch dữ liệu", command=self.clean_data).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Quay lại trang chính", command=self.go_to_main_page).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
         self.nav_frame = ttk.Frame(root)
@@ -224,7 +227,7 @@ class DataApp:
         
         tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height, selectmode="extended")
 
-        tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
+        # tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
         for col in columns:
             tree.heading(col, text=col)
             tree.column(col, width=150, anchor=tk.CENTER)
@@ -293,9 +296,12 @@ class DataApp:
 
 
     def open_input_window(self, title, action_callback, record_data=None):
+        """
+        Mở cửa số nhập liệu
+        """
         input_window = tk.Toplevel(self.root)
         input_window.title(title)
-        input_window.geometry("600x600")
+        input_window.geometry("400x600")
 
         widgets = {}
         for i, col in enumerate(self.data.columns):
@@ -533,6 +539,18 @@ class DataApp:
         # column_combobox.pack(pady=5)
 
         ttk.Button(chart_window, text="Vẽ biểu đồ", command=plot_chart).pack(pady=10)
+    
+    def clean_data(self):
+        """
+        Hàm xử lý khi nhấn nút "Làm sạch dữ liệu"
+        """
+        try:
+            file_path = 'dataset\\depression_data.csv'  # Đường dẫn đến file CSV gốc
+            output_path = 'dataset\\cleaned_and_predicted_data.csv'  # Đường dẫn đến file kết quả
+            cleaned_data = clean_data(file_path, output_path)  # Gọi hàm clean_data
+            messagebox.showinfo("Thành công", "Dữ liệu đã được làm sạch và lưu vào file mới.")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
 
     def prev_page(self):
         if self.current_page > 1:
@@ -554,6 +572,7 @@ class DataApp:
                 raise ValueError
         except ValueError:
             messagebox.showerror("Lỗi", "Số trang phải là số hợp lệ.")
+
 
 
 if __name__ == "__main__":
