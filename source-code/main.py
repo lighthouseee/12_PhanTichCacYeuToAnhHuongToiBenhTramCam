@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from crud.CRUD import read_csv_data, paginate_data, create_data, update_data, delete_records
-from tool.tool import sort_data, filter_data
-from visualization.visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
+from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
+from search_filter_sort import sort_data, filter_data
+from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
