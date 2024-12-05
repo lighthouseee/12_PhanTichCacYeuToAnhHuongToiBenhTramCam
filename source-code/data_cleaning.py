@@ -5,37 +5,6 @@ import numpy as np
 file_path = 'dataset\\depression_data.csv'  
 data = pd.read_csv(file_path)
 
-def detect_outliers(df: pd.DataFrame) -> dict:
-    """
-    Phát hiện giá trị bất thường trong dữ liệu.
-    """
-    num_conditions = {
-        'Age': (df['Age'] < 18) | (df['Age'] > 80),
-        'Income': df['Income'] < 0,
-        'Number of Children': df['Number of Children'] < 0
-    }
-
-    cat_conditions = {
-        'Physical Activity Level': ~df['Physical Activity Level'].isin(['Sedentary', 'Moderate', 'Active']),
-        'Smoking Status': ~df['Smoking Status'].isin(['Non-smoker', 'Former', 'Current']),
-        'Employment Status': ~df['Employment Status'].isin(['Employed', 'Unemployed']),
-        'Alcohol Consumption': ~df['Alcohol Consumption'].isin(['Low', 'Moderate', 'High']),
-        'Dietary Habits': ~df['Dietary Habits'].isin(['Healthy', 'Moderate', 'Unhealthy']),
-        'Sleep Patterns': ~df['Sleep Patterns'].isin(['Poor', 'Good', 'Fair']),
-        'History of Mental Illness': ~df['History of Mental Illness'].isin(['Yes', 'No']),
-        'History of Substance Abuse': ~df['History of Substance Abuse'].isin(['Yes', 'No']),
-        'Family History of Depression': ~df['Family History of Depression'].isin(['Yes', 'No']),
-        'Chronic Medical Conditions': ~df['Chronic Medical Conditions'].isin(['Yes', 'No']),
-        'Marital Status': ~df['Marital Status'].isin(['Single', 'Married', 'Divorced', 'Widowed']),
-        'Education Level': ~df['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])
-    }
-
-    issues = {}
-    for col, condition in {**num_conditions, **cat_conditions}.items():
-        if condition.any():
-            issues[col] = f"Cột {col} có giá trị bất thường."
-    return issues
-
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
     Thay thế các giá trị bất thường bằng NaN trong DataFrame.
