@@ -67,7 +67,7 @@ def plot_marital_vs_depression(data, save_path=None):
         palette='coolwarm'
     )
 
-    plt.title('Mối tương quan giữa Tình trạng hôn nhân và Nguy cơ trầm cảm', fontsize=16)
+    plt.title('Marital status by Depression Risk', fontsize=16, pad=20)
     plt.xlabel('Tình trạng hôn nhân', fontsize=14)
     plt.ylabel('Số lượng người', fontsize=14)
     plt.legend(title='Nguy cơ trầm cảm', fontsize=12)
