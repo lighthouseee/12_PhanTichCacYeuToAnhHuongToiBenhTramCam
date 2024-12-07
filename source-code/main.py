@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-CSV_FILE ='dataset\\depression_data.csv'
+CSV_FILE ='dataset\\cleaned_and_predicted_data.csv'
 
 VALID_VALUES = {
     "Smoking Status": ["Non-smoker", "Former", "Current"],
