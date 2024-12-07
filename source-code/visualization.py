@@ -67,7 +67,7 @@ def plot_marital_vs_depression(data, save_path=None):
         palette='coolwarm'
     )
 
-    plt.title('Mối tương quan giữa Tình trạng hôn nhân và Nguy cơ trầm cảm', fontsize=16)
+    plt.title('Marital status by Depression Risk', fontsize=16, pad=20)
     plt.xlabel('Tình trạng hôn nhân', fontsize=14)
     plt.ylabel('Số lượng người', fontsize=14)
     plt.legend(title='Nguy cơ trầm cảm', fontsize=12)
@@ -164,17 +164,3 @@ def plot_employment_vs_depression(data, save_path=None):
     plt.tight_layout()
     save_or_show_plot(save_path)
 
-# Chương trình chính
-if __name__ == "__main__":
-    file_path_1 = 'dataset\\filtered_depression_data.csv'
-    file_path_2 = 'dataset\\cleaned_and_predicted_data.csv'
-
-    data_1 = pd.read_csv(file_path_1)
-    data_2 = pd.read_csv(file_path_2)
-
-    # Gọi từng biểu đồ
-    plot_sleep_vs_depression(data_1)
-    plot_marital_vs_depression(data_2)
-    plot_age_distribution(data_1)
-    plot_education_vs_depression(data_1)
-    plot_employment_vs_depression(data_2)
