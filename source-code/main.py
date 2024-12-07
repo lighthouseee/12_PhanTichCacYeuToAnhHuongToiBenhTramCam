@@ -2,11 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
-<<<<<<< HEAD
 from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_marital_vs_depression, plot_sleep_vs_depression
-=======
-from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_sleep_vs_depression, plot_marital_vs_depression
->>>>>>> 8672192d83da955679a7dfd37dd448bbe86b66b2
 # from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -532,7 +528,7 @@ class DataApp:
         # Cửa sổ hiển thị biểu đồ
         chart_window = tk.Toplevel(self.root)
         chart_window.title("Xem Biểu đồ")
-        chart_window.geometry("500x600")
+        chart_window.geometry("500x500")
 
         ttk.Label(chart_window, text="Chọn biểu đồ:").pack(pady=10)
         chart_combobox = ttk.Combobox(chart_window, values=[
