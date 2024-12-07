@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
+from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_sleep_vs_depression, plot_marital_vs_depression
 from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_marital_vs_depression, plot_sleep_vs_depression
 # from data_cleaning import clean_data
 import pandas as pd
