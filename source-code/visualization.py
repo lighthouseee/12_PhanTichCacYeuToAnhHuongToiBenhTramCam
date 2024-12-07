@@ -175,6 +175,3 @@ if __name__ == "__main__":
     # Gọi từng biểu đồ
     plot_sleep_vs_depression(data_1)
     plot_marital_vs_depression(data_2)
-    plot_age_distribution(data_1)
-    plot_education_vs_depression(data_1)
-    plot_employment_vs_depression(data_2)

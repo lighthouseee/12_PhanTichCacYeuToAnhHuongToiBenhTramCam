@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
-from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression 
+from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_sleep_vs_depression, plot_marital_vs_depression
 # from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -497,6 +497,10 @@ class DataApp:
                 plot_education_vs_depression(self.data_age_education)
             elif selected_chart == "Biểu đồ việc làm và trầm cảm":
                 plot_employment_vs_depression(self.data_employment)
+            elif selected_chart == "Biểu đồ giấc ngủ và trầm cảm":
+                plot_sleep_vs_depression(self.data_age_education)
+            elif selected_chart == "Biểu đồ tình trạng hôn nhân và trầm cảm":
+                plot_marital_vs_depression(self.data_employment)
             else:
                 return
 
@@ -531,6 +535,8 @@ class DataApp:
             "Biểu đồ phân bố tuổi", 
             "Biểu đồ học vấn và trầm cảm", 
             "Biểu đồ việc làm và trầm cảm",
+            "Biểu đồ giấc ngủ và trầm cảm",
+            "Biểu đồ tình trạng hôn nhân và trầm cảm"
         ], )
         chart_combobox.pack(pady=5)
 
