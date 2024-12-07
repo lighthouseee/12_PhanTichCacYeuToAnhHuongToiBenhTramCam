@@ -4,28 +4,6 @@ import numpy as np
 # Đọc file CSV
 file_path = 'dataset\\depression_data.csv'  
 data = pd.read_csv(file_path)
-# def clean_data(file_path: str, output_path: str) -> pd.DataFrame:
-#     """
-#     Thực hiện việc làm sạch dữ liệu và dự đoán mức độ trầm cảm.
-#     """
-
-#     # Đọc file CSV
-#     file_path = 'dataset\\depression_data.csv'
-#     data = pd.read_csv(file_path)
-
-#     # Xử lý và làm sạch dữ liệu
-#     cleaned_data = remove_outliers(data)
-#     cleaned_data = fill_missing_values(cleaned_data)
-
-#     # Tạo cột "Depression Risk"
-#     cleaned_data['Depression Risk'] = predict_depression_risk(cleaned_data)
-
-#     # Lưu dữ liệu đã làm sạch vào file mới
-#     output_path = 'dataset\\cleaned_and_predicted_data.csv'
-#     cleaned_data.to_csv(output_path, index=False)
-
-#     return cleaned_data    
-
 
 def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
