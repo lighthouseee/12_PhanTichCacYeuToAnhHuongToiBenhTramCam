@@ -31,7 +31,6 @@ def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
     """
     Thay thế các giá trị bất thường bằng NaN trong DataFrame.
     """
-
     # Điều kiện lọc với dữ liệu số
     num_conditions = {
         'Age': (data['Age'] >= 18) & (data['Age'] <= 80),
@@ -54,12 +53,14 @@ def remove_outliers(data: pd.DataFrame) -> pd.DataFrame:
         'Education Level': data['Education Level'].isin(["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"])
     }
 
-    # Nếu không thỏa các điều kiện nêu trên, dữ liệu bất thường sẽ bị thay thế thành NaN
+    # Chỉ thay thế các giá trị không thỏa mãn điều kiện bằng NaN
     for column, condition in num_conditions.items():
-        data[column] = data[column].where(~condition, np.nan)
+        if column in data.columns:
+            data.loc[~condition, column] = np.nan
 
     for column, condition in cat_conditions.items():
-        data[column] = data[column].where(~condition, np.nan)
+        if column in data.columns:
+            data.loc[~condition, column] = np.nan
 
     return data
 
