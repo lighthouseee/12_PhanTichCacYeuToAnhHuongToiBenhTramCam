@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
 from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
-from data_cleaning import clean_data
+# from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -64,7 +64,7 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Xem biểu đồ", command=self.view_chart).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Làm sạch dữ liệu", command=self.clean_data).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Làm sạch dữ liệu", command=self.clean_data).pack(side=tk.LEFT, padx=10)
         # ttk.Button(self.menu_frame, text="Quay lại trang chính", command=self.go_to_main_page).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
@@ -364,7 +364,7 @@ class DataApp:
 
     def open_search_window(self):
         """
-        Mở cửa sổ tìm kiếm để người dùng tìm theo bất kỳ cột nào.
+        Mở cửa sổ tìm kiếm nhỏ để người dùng tìm theo bất kỳ cột nào ngay trên cửa sổ Treeview chính.
         """
         def perform_search():
             column = column_combobox.get()
@@ -372,36 +372,47 @@ class DataApp:
             if not column or not value:
                 messagebox.showerror("Lỗi", "Vui lòng chọn cột và nhập giá trị cần tìm.")
                 return
+
+            # Tìm kiếm trong DataFrame
             results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
-            for row in results_tree.get_children():
-                results_tree.delete(row)
+
+            if results.empty:
+                messagebox.showinfo("Thông báo", "Không có kết quả tìm kiếm.")
+                return
+
+            # Xóa các kết quả cũ trong Treeview chính
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # Chèn các kết quả tìm kiếm vào Treeview chính
             for idx, row in results.iterrows():
-                results_tree.insert("", tk.END, values=list(row), tags=(idx,))
+                self.tree.insert("", tk.END, values=list(row), tags=(idx,))
 
-        search_window = tk.Toplevel(self.root)
-        search_window.title("Tìm kiếm dữ liệu")
-        search_window.geometry("800x600")
+        # Tạo một khung tìm kiếm nhỏ gọn trên cửa sổ chính
+        search_frame = ttk.Frame(self.root)
+        search_frame.pack(pady=10, padx=10, fill=tk.X)
 
-        ttk.Label(search_window, text="Chọn cột để tìm kiếm:").pack(pady=5)
-        column_combobox = ttk.Combobox(search_window, values=list(self.data.columns), state="readonly")
-        column_combobox.pack(pady=5)
+        # Label và combobox chọn cột
+        ttk.Label(search_frame, text="Chọn cột để tìm kiếm:").pack(side=tk.LEFT, padx=5)
+        column_combobox = ttk.Combobox(search_frame, values=list(self.data.columns), state="readonly")
+        column_combobox.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(search_window, text="Nhập giá trị cần tìm:").pack(pady=5)
-        value_entry = ttk.Entry(search_window, width=30)
-        value_entry.pack(pady=5)
+        # Label và ô nhập giá trị cần tìm
+        ttk.Label(search_frame, text="Nhập giá trị cần tìm:").pack(side=tk.LEFT, padx=5)
+        value_entry = ttk.Entry(search_frame, width=30)
+        value_entry.pack(side=tk.LEFT, padx=5)
 
-        ttk.Button(search_window, text="Tìm kiếm", command=perform_search).pack(pady=10)
+        # Nút tìm kiếm
+        ttk.Button(search_frame, text="Tìm kiếm", command=perform_search).pack(side=tk.LEFT, padx=10)
 
-        # Tạo Treeview với thanh cuộn
-        results_tree, _, _ = self.create_treeview_with_scrollbars(
-            parent_frame=search_window, 
-            columns=list(self.data.columns), 
-            height=15
-        )
+        # Nếu bạn muốn có thể đặt lại tìm kiếm (làm sạch kết quả)
+        def reset_search():
+            value_entry.delete(0, tk.END)
+            for row in self.tree.get_children():
+                self.tree.delete(row)
 
-        # results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
-        # Thêm nút "Xóa" để xóa các dòng đã chọn
-        ttk.Button(search_window, text="Xóa dữ liệu", command=lambda: self.delete_records_in_search(results_tree)).pack(pady=10)
+        # Nút "Xóa tìm kiếm" để reset
+        ttk.Button(search_frame, text="Xóa tìm kiếm", command=reset_search).pack(side=tk.LEFT, padx=10)
         
     def open_filter_window(self):
         """Mở cửa sổ lọc dữ liệu."""
@@ -476,7 +487,7 @@ class DataApp:
         self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
         messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
 
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Thêm import này
+    
 
     def view_chart(self):
         """
@@ -540,17 +551,17 @@ class DataApp:
 
         ttk.Button(chart_window, text="Vẽ biểu đồ", command=plot_chart).pack(pady=10)
     
-    def clean_data(self):
-        """
-        Hàm xử lý khi nhấn nút "Làm sạch dữ liệu"
-        """
-        try:
-            file_path = 'dataset\\depression_data.csv'  # Đường dẫn đến file CSV gốc
-            output_path = 'dataset\\cleaned_and_predicted_data.csv'  # Đường dẫn đến file kết quả
-            cleaned_data = clean_data(file_path, output_path)  # Gọi hàm clean_data
-            messagebox.showinfo("Thành công", "Dữ liệu đã được làm sạch và lưu vào file mới.")
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
+    # def clean_data(self):
+    #     """
+    #     Hàm xử lý khi nhấn nút "Làm sạch dữ liệu"
+    #     """
+    #     try:
+    #         file_path = 'dataset\\depression_data.csv'  # Đường dẫn đến file CSV gốc
+    #         output_path = 'dataset\\cleaned_and_predicted_data.csv'  # Đường dẫn đến file kết quả
+    #         cleaned_data = clean_data(file_path, output_path)  # Gọi hàm clean_data
+    #         messagebox.showinfo("Thành công", "Dữ liệu đã được làm sạch và lưu vào file mới.")
+    #     except Exception as e:
+    #         messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
 
     def prev_page(self):
         if self.current_page > 1:

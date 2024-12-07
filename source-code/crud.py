@@ -46,6 +46,7 @@ def create_data(data, new_entry):
     new_data = pd.DataFrame([new_entry])
 
     # Thêm bản ghi mới vào file CSV (append mode)
+    header = not data.empty
     new_data.to_csv(CSV_FILE, mode='a', index=False, header=False)
 
     # Cập nhật DataFrame hiện tại
