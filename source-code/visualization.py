@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Hàm hỗ trợ
-def save_or_show_plot(save_path, verbose=True):
+def save_or_show_plot(save_path=None, verbose=True):
     """
     Lưu hoặc hiển thị biểu đồ.
     """
@@ -15,6 +15,75 @@ def save_or_show_plot(save_path, verbose=True):
         plt.show()
 
 # Các hàm vẽ biểu đồ
+def plot_sleep_vs_depression(data, save_path=None):
+    """
+    Vẽ biểu đồ mối tương quan giữa Mẫu giấc ngủ và Nguy cơ trầm cảm.
+    """
+    sleep_vs_depression = data.groupby(['Sleep Patterns', 'Depression Risk']).size().unstack()
+    sleep_vs_depression_reset = sleep_vs_depression.reset_index().melt(
+        id_vars='Sleep Patterns', 
+        var_name='Depression Risk', 
+        value_name='Count'
+    )
+
+    plt.figure(figsize=(14, 8))
+    barplot = sns.barplot(
+        data=sleep_vs_depression_reset, 
+        x='Sleep Patterns', 
+        y='Count', 
+        hue='Depression Risk', 
+        palette="coolwarm"
+    )
+
+    plt.title('Sleep Patterns by Depression Risk', fontsize=16, pad=20)
+    plt.xlabel('Sleep Patterns', fontsize=14, labelpad=10)
+    plt.ylabel('Number of People', fontsize=14, labelpad=10)
+    plt.legend(title='Depression Risk', fontsize=12)
+
+    for p in barplot.patches:
+        height = p.get_height()
+        if height > 0:
+            barplot.annotate(f'{int(height)}', 
+                             (p.get_x() + p.get_width() / 2., height), 
+                             ha='center', va='bottom', 
+                             fontsize=10, color='black', 
+                             xytext=(0, 3), textcoords='offset points')
+
+    plt.tight_layout()
+    save_or_show_plot(save_path)
+
+def plot_marital_vs_depression(data, save_path=None):
+    """
+    Vẽ biểu đồ mối tương quan giữa Tình trạng hôn nhân và Nguy cơ trầm cảm.
+    """
+    marital_vs_depression = data.value_counts(['Marital Status', 'Depression Risk']).reset_index(name='Count')
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=marital_vs_depression, 
+        x='Marital Status', 
+        y='Count', 
+        hue='Depression Risk', 
+        palette='coolwarm'
+    )
+
+    plt.title('Mối tương quan giữa Tình trạng hôn nhân và Nguy cơ trầm cảm', fontsize=16)
+    plt.xlabel('Tình trạng hôn nhân', fontsize=14)
+    plt.ylabel('Số lượng người', fontsize=14)
+    plt.legend(title='Nguy cơ trầm cảm', fontsize=12)
+
+    for p in plt.gca().patches:
+        plt.text(
+            p.get_x() + p.get_width() / 2,  
+            p.get_height(),                 
+            f'{int(p.get_height())}',       
+            ha='center', va='bottom',      
+            fontsize=10, color='black'     
+        )
+
+    plt.tight_layout()
+    save_or_show_plot(save_path)
+
 def plot_age_distribution(data, save_path=None, colors=None):
     """
     Vẽ biểu đồ mật độ phân phối tuổi theo nhóm nguy cơ.
@@ -38,8 +107,6 @@ def plot_age_distribution(data, save_path=None, colors=None):
     plt.tight_layout()
     save_or_show_plot(save_path)
 
-import seaborn as sns
-
 def plot_education_vs_depression(data, save_path=None):
     """
     Vẽ biểu đồ phân phối nguy cơ trầm cảm theo trình độ học vấn.
@@ -47,19 +114,16 @@ def plot_education_vs_depression(data, save_path=None):
     education_vs_depression = data.value_counts(['Education Level', 'Depression Risk']).reset_index(name='Count')
     education_vs_depression = education_vs_depression.sort_values('Count', ascending=False)
 
-    # Tạo bảng màu đẹp hơn
     palette = sns.color_palette("hls", len(data['Depression Risk'].unique()))
 
     plt.figure(figsize=(12, 6))
 
-    # Vẽ biểu đồ cột với màu sắc
     for risk, color in zip(data['Depression Risk'].unique(), palette):
         subset = education_vs_depression[education_vs_depression['Depression Risk'] == risk]
         bars = plt.bar(
             subset['Education Level'], subset['Count'], label=risk, alpha=0.7, color=color
         )
 
-        # Hiển thị số liệu trên các cột
         for bar in bars:
             height = bar.get_height()
             plt.text(
@@ -73,31 +137,24 @@ def plot_education_vs_depression(data, save_path=None):
     plt.xticks(rotation=45, ha='right')
     plt.legend(title='Depression Risk', loc='upper right')
     plt.tight_layout()
-    
-    # Lưu hoặc hiển thị biểu đồ
     save_or_show_plot(save_path)
-    
+
 def plot_employment_vs_depression(data, save_path=None):
     """
-    Vẽ biểu đồ cột đôi thể hiện tỷ lệ trạng thái việc làm theo nguy cơ trầm cảm.
+    Vẽ biểu đồ trạng thái việc làm theo nguy cơ trầm cảm.
     """
-    # Sắp xếp thứ tự Depression Risk
     depression_order = ['Very Low', 'Low', 'Medium', 'High', 'Very High']
     data['Depression Risk'] = pd.Categorical(data['Depression Risk'], categories=depression_order, ordered=True)
 
-    # Tính số lượng và tỷ lệ phần trăm
     grouped_data = data.value_counts(['Depression Risk', 'Employment Status']).reset_index(name='Count')
     grouped_data = grouped_data.sort_values('Depression Risk')
-    total_counts = grouped_data.groupby('Depression Risk', observed=False)['Count'].transform('sum')  # Sửa lỗi
+    total_counts = grouped_data.groupby('Depression Risk')['Count'].transform('sum')
     grouped_data['Percentage'] = grouped_data['Count'] / total_counts * 100
 
-    # Pivot để chuyển đổi dữ liệu cho biểu đồ cột đôi
     pivot_table = grouped_data.pivot(index='Depression Risk', columns='Employment Status', values='Percentage').fillna(0)
 
-    # Vẽ biểu đồ cột đôi
     pivot_table.plot(kind='bar', figsize=(12, 6), width=0.7, color=sns.color_palette("Set2", len(pivot_table.columns)))
 
-    # Thêm tiêu đề và nhãn
     plt.title('Distribution of Employment Status by Depression Risk', fontsize=16, fontweight='bold')
     plt.xlabel('Depression Risk', fontsize=12)
     plt.ylabel('Percentage (%)', fontsize=12)
@@ -109,18 +166,15 @@ def plot_employment_vs_depression(data, save_path=None):
 
 # Chương trình chính
 if __name__ == "__main__":
-    # Đọc dữ liệu
-    file_path_age_education = 'dataset\\filtered_depression_data.csv'
-    file_path_employment = 'dataset\\cleaned_and_predicted_data.csv'
-    data_age_education = pd.read_csv(file_path_age_education)
-    data_employment = pd.read_csv(file_path_employment)
+    file_path_1 = 'dataset\\filtered_depression_data.csv'
+    file_path_2 = 'dataset\\cleaned_and_predicted_data.csv'
 
-    # Vẽ từng biểu đồ
-    plot_age_distribution(data_age_education)
-    # plot_age_distribution(data_age_education, save_path='age_distribution.png')
+    data_1 = pd.read_csv(file_path_1)
+    data_2 = pd.read_csv(file_path_2)
 
-    plot_education_vs_depression(data_age_education)
-    # plot_education_vs_depression(data_age_education, save_path='education_vs_depression.png')
-
-    plot_employment_vs_depression(data_employment)
-    # plot_employment_vs_depression(data_employment, save_path='employment_vs_depression.png')
+    # Gọi từng biểu đồ
+    plot_sleep_vs_depression(data_1)
+    plot_marital_vs_depression(data_2)
+    plot_age_distribution(data_1)
+    plot_education_vs_depression(data_1)
+    plot_employment_vs_depression(data_2)
