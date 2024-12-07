@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-CSV_FILE ='dataset\\depression_data.csv'
+CSV_FILE ='dataset\\cleaned_and_predicted_data.csv'
 
 VALID_VALUES = {
     "Smoking Status": ["Non-smoker", "Former", "Current"],
@@ -23,7 +23,7 @@ VALID_VALUES = {
     "Chronic Medical Conditions": ["Yes", "No"],
     "Marital Status": ["Single", "Married", "Divorced", "Widowed"],
     "Education Level": ["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"],
-    "Depression Risk": ["Low", "Medium", "High", "Very High"]
+    "Depression Risk": ["Very Low", "Low", "Medium", "High", "Very High"]
 }
 
 
