@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
-from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression 
+from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_marital_vs_depression, plot_sleep_vs_depression
 # from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -487,16 +487,20 @@ class DataApp:
             Vẽ biểu đồ cho cột đã chọn từ dữ liệu trong DataFrame hoặc từ các hàm trong visualization.py.
             """
             selected_chart = chart_combobox.get()
-            file_path_age_education = 'dataset\\filtered_depression_data.csv'
-            file_path_employment = 'dataset\\cleaned_and_predicted_data.csv'
-            self.data_age_education = pd.read_csv(file_path_age_education)
-            self.data_employment = pd.read_csv(file_path_employment)
-            if selected_chart == "Biểu đồ phân bố tuổi":
-                plot_age_distribution(self.data_age_education)
-            elif selected_chart == "Biểu đồ học vấn và trầm cảm":
-                plot_education_vs_depression(self.data_age_education)
-            elif selected_chart == "Biểu đồ việc làm và trầm cảm":
-                plot_employment_vs_depression(self.data_employment)
+            file_path_1 = 'dataset\\filtered_depression_data.csv'
+            file_path_2 = 'dataset\\cleaned_and_predicted_data.csv'
+            self.data_1 = pd.read_csv(file_path_1)
+            self.data_2 = pd.read_csv(file_path_2)
+            if selected_chart == "Phân phối nhóm tuổi theo nguy cơ trầm cảm":
+                plot_age_distribution(self.data_1)
+            elif selected_chart == "Nguy cơ trầm cảm theo trình độ học vấn":
+                plot_education_vs_depression(self.data_1)
+            elif selected_chart == "Trạng thái việc làm và trầm cảm":
+                plot_employment_vs_depression(self.data_2)
+            elif selected_chart == "Tương quan tình trạng hôn nhân và nguy cơ trầm cảm":
+                plot_marital_vs_depression(self.data_2)
+            elif selected_chart == "Tương quan giấc ngủ và nguy cơ trầm cảm":
+                plot_sleep_vs_depression(self.data_1)
             else:
                 return
 
@@ -528,9 +532,12 @@ class DataApp:
 
         ttk.Label(chart_window, text="Chọn biểu đồ:").pack(pady=10)
         chart_combobox = ttk.Combobox(chart_window, values=[
-            "Biểu đồ phân bố tuổi", 
-            "Biểu đồ học vấn và trầm cảm", 
-            "Biểu đồ việc làm và trầm cảm",
+            "Phân phối nhóm tuổi theo nguy cơ trầm cảm", 
+            "Nguy cơ trầm cảm theo trình độ học vấn", 
+            "Trạng thái việc làm và trầm cảm",
+            "Tương quan tình trạng hôn nhân và nguy cơ trầm cảm",
+            "Tương quan giấc ngủ và nguy cơ trầm cảm"
+            ,
         ], )
         chart_combobox.pack(pady=5)
 
