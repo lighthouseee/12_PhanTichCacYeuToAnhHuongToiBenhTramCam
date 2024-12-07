@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-CSV_FILE = "cleaned_and_predicted_data.csv"
+CSV_FILE ='dataset\\depression_data.csv'
 
 VALID_VALUES = {
     "Smoking Status": ["Non-smoker", "Former", "Current"],
@@ -33,8 +33,9 @@ class DataApp:
         self.root.title("Quản lý dữ liệu")
         self.root.geometry("1200x600")
         
-        self.original_data = read_csv_data()  # Dữ liệu gốc
-        self.data = self.original_data.copy()  # Dữ liệu hiện tại (có thể bị lọc)
+        self.data = pd.read_csv(CSV_FILE)
+        self.original_data = self.data.copy()  # Lưu trữ dữ liệu gốc
+        
         
         # self.data = read_csv_data()
         self.current_page = 1
@@ -63,9 +64,10 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Sắp xếp", command=self.open_sort_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Xem biểu đồ", command=self.view_chart).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.menu_frame, text="Khôi phục Treeview", command=self.restore_data).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Lưu thay đổi", command=self.save_changes).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Khôi phục Treeview", command=self.update_treeview).pack(side=tk.LEFT, padx=10)
         # ttk.Button(self.menu_frame, text="Làm sạch dữ liệu", command=self.clean_data).pack(side=tk.LEFT, padx=10)
-        # ttk.Button(self.menu_frame, text="Quay lại trang chính", command=self.go_to_main_page).pack(side=tk.RIGHT, padx=10)
 
         # Điều hướng trang
         self.nav_frame = ttk.Frame(root)
@@ -126,8 +128,6 @@ class DataApp:
                     messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
                 except ValueError as e:
                     messagebox.showerror("Lỗi", str(e))
-
-
 
         ttk.Button(action_window, text="Cập nhật", command=update_record).pack(pady=5)
         ttk.Button(action_window, text="Xóa", command=delete_record).pack(pady=5)
@@ -271,12 +271,8 @@ class DataApp:
                 except ValueError:
                     errors.append(f"Trường '{col}' phải là số.")
             elif col == "Number of Children":
-                try:
-                    value = float(value)
-                    if value < 0:
-                        errors.append(f"Trường '{col}' phải là số không âm." )
-                except ValueError:
-                    errors.append(f"Trường '{col}' phải là số.")
+                    if not str(value).isdigit() or not (0 <= int(value) <= 20):
+                        errors.append(f"Trường '{col}' phải là số từ 0 đến 20.")
             elif col in VALID_VALUES and value not in VALID_VALUES[col]:
                 errors.append(f"Trường '{col}' phải thuộc {VALID_VALUES[col]}.")
 
@@ -328,12 +324,10 @@ class DataApp:
                     else:
                         data[col] = int(value)
                 elif col == "Number of Children":
-                    try:
-                        value = float(value)
-                        if value < 0:
-                            errors.append(f"Trường '{col}' phải là số không âm." )
-                    except ValueError:
-                        errors.append(f"Trường '{col}' phải là số.")
+                    if not value.isdigit() or not (0 <= int(value) <= 20):
+                        errors.append(f"Trường '{col}' phải là số từ 0 đến 20")
+                    else:
+                        data[col] = int(value)
                 elif col == "Income":
                     if not value.replace('.', '', 1).isdigit() or float(value) < 0:
                         errors.append(f"Trường '{col}' phải là số không âm.")
@@ -367,14 +361,17 @@ class DataApp:
         Mở cửa sổ tìm kiếm nhỏ để người dùng tìm theo bất kỳ cột nào ngay trên cửa sổ Treeview chính.
         """
         def perform_search():
-            column = column_combobox.get()
-            value = value_entry.get().strip()
-            if not column or not value:
-                messagebox.showerror("Lỗi", "Vui lòng chọn cột và nhập giá trị cần tìm.")
+            column = column_combobox.get()  # Cột người dùng chọn
+            value = value_entry.get().strip()  # Giá trị người dùng nhập
+            if not value:
+                messagebox.showerror("Lỗi", "Vui lòng nhập giá trị cần tìm.")
                 return
 
-            # Tìm kiếm trong DataFrame
-            results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
+            if not column:  # Nếu không chọn cột, tìm kiếm trong tất cả các cột
+                # Tìm kiếm trong tất cả các cột
+                results = self.data[self.data.apply(lambda row: row.astype(str).str.contains(value, case=False, na=False).any(), axis=1)]
+            else:  # Nếu chọn cột, tìm kiếm trong cột đó
+                results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
 
             if results.empty:
                 messagebox.showinfo("Thông báo", "Không có kết quả tìm kiếm.")
@@ -394,7 +391,7 @@ class DataApp:
 
         # Label và combobox chọn cột
         ttk.Label(search_frame, text="Chọn cột để tìm kiếm:").pack(side=tk.LEFT, padx=5)
-        column_combobox = ttk.Combobox(search_frame, values=list(self.data.columns), state="readonly")
+        column_combobox = ttk.Combobox(search_frame, values=[""] + list(self.data.columns), state="readonly")  # Thêm lựa chọn trống cho tìm kiếm trong tất cả cột
         column_combobox.pack(side=tk.LEFT, padx=5)
 
         # Label và ô nhập giá trị cần tìm
@@ -404,15 +401,7 @@ class DataApp:
 
         # Nút tìm kiếm
         ttk.Button(search_frame, text="Tìm kiếm", command=perform_search).pack(side=tk.LEFT, padx=10)
-
-        # Nếu bạn muốn có thể đặt lại tìm kiếm (làm sạch kết quả)
-        def reset_search():
-            value_entry.delete(0, tk.END)
-            for row in self.tree.get_children():
-                self.tree.delete(row)
-
-        # Nút "Xóa tìm kiếm" để reset
-        ttk.Button(search_frame, text="Xóa tìm kiếm", command=reset_search).pack(side=tk.LEFT, padx=10)
+       
         
     def open_filter_window(self):
         """Mở cửa sổ lọc dữ liệu."""
@@ -478,14 +467,14 @@ class DataApp:
 
         ttk.Button(sort_window, text="Sắp xếp", command=perform_sort).pack(pady=10)
 
-    def clear(self):
-        """
-        Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc) và cập nhật lại file CSV.
-        """
-        self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
-        self.update_treeview()  # Cập nhật Treeview với dữ liệu gốc
-        self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
-        messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
+    # def clear(self):
+    #     """
+    #     Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc) và cập nhật lại file CSV.
+    #     """
+    #     self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
+    #     self.update_treeview()  # Cập nhật Treeview với dữ liệu gốc
+    #     self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
+    #     messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
 
     
 
@@ -563,6 +552,24 @@ class DataApp:
     #     except Exception as e:
     #         messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
 
+    def save_changes(self):
+        """
+        Lưu các thay đổi từ self.data vào self.original_data.
+        Điều này sẽ cập nhật dữ liệu gốc với tất cả các thay đổi (thêm, xóa, cập nhật).
+        """
+        self.original_data = self.data.copy()  # Sao chép dữ liệu hiện tại vào dữ liệu gốc
+        messagebox.showinfo("Thông báo", "Thay đổi đã được lưu!")
+        
+    def restore_data(self):
+        """
+        Khôi phục dữ liệu về trạng thái ban đầu (không bao gồm các thay đổi về tìm kiếm, lọc, sắp xếp).
+        Các thay đổi về thêm, xóa, cập nhật vẫn được lưu giữ.
+        """
+        # Khôi phục dữ liệu về trạng thái ban đầu
+        self.data = self.original_data.copy()
+    
+        # Cập nhật lại Treeview để hiển thị dữ liệu đã khôi phục
+        self.update_treeview()
     def prev_page(self):
         if self.current_page > 1:
             self.current_page -= 1

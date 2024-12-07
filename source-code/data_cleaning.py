@@ -81,6 +81,11 @@ def fill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
 
         # Điền mean cho các cột không lệch
         data[mean_cols] = data[mean_cols].fillna(data[mean_cols].mean()).round(2)
+        
+        # Chuyển các cột có kiểu dữ liệu số thành kiểu int nếu giá trị là số nguyên
+        data[median_cols] = data[median_cols].applymap(lambda x: int(x) if x == int(x) else x)
+        data[mean_cols] = data[mean_cols].applymap(lambda x: int(x) if x == int(x) else x)
+
 
     # Xử lý các cột chuỗi
     
