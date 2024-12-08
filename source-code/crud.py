@@ -1,7 +1,7 @@
 import pandas as pd
 import math
 
-CSV_FILE = "dataset\\cleaned_and_predicted_data.csv"
+CSV_FILE = 'dataset\\cleaned_and_predicted_data.csv'
 
 def read_csv_data():
     """
@@ -12,7 +12,7 @@ def read_csv_data():
     except FileNotFoundError:
         return pd.DataFrame()
 
-def paginate_data(data, page_size, current_page):
+def paginate_data(data: pd.DataFrame, page_size: int, current_page: int):
     """
     Phân trang dữ liệu.
     :param data: DataFrame hiện tại
@@ -20,11 +20,18 @@ def paginate_data(data, page_size, current_page):
     :param current_page: Trang hiện tại
     :return: DataFrame của trang hiện tại và tổng số trang
     """
+    # Tính tổng số trang
     total_pages = math.ceil(len(data) / page_size)
+    
+    # Kiểm tra trang hợp lệ
     if current_page < 1 or current_page > total_pages:
         raise ValueError("Trang không hợp lệ.")
+    
+    # Tính chỉ số bắt đầu và kết thúc của trang hiện tại
     start_idx = (current_page - 1) * page_size
     end_idx = start_idx + page_size
+    
+    # Trả về dữ liệu trang hiện tại và tổng số trang
     return data.iloc[start_idx:end_idx], total_pages
 
 
@@ -39,6 +46,7 @@ def create_data(data, new_entry):
     new_data = pd.DataFrame([new_entry])
 
     # Thêm bản ghi mới vào file CSV (append mode)
+    header = not data.empty
     new_data.to_csv(CSV_FILE, mode='a', index=False, header=False)
 
     # Cập nhật DataFrame hiện tại

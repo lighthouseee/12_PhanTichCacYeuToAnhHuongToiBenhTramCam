@@ -1,13 +1,14 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from crud import read_csv_data, paginate_data, create_data, update_data, delete_records
 from search_filter_sort import sort_data, filter_data
-from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression
+from visualization import plot_age_distribution, plot_education_vs_depression, plot_employment_vs_depression, plot_sleep_vs_depression, plot_marital_vs_depression
+# from data_cleaning import clean_data
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-CSV_FILE = "cleaned_and_predicted_data.csv"
+CSV_FILE ='dataset\\cleaned_and_predicted_data.csv'
 
 VALID_VALUES = {
     "Smoking Status": ["Non-smoker", "Former", "Current"],
@@ -22,7 +23,7 @@ VALID_VALUES = {
     "Chronic Medical Conditions": ["Yes", "No"],
     "Marital Status": ["Single", "Married", "Divorced", "Widowed"],
     "Education Level": ["High School", "Bachelor's Degree", "Master's Degree", "Associate Degree", "PhD"],
-    "Depression Risk": ["Low", "Medium", "High", "Very High"]
+    "Depression Risk": ["Very Low", "Low", "Medium", "High", "Very High"]
 }
 
 
@@ -32,8 +33,9 @@ class DataApp:
         self.root.title("Quản lý dữ liệu")
         self.root.geometry("1200x600")
         
-        self.original_data = read_csv_data()  # Dữ liệu gốc
-        self.data = self.original_data.copy()  # Dữ liệu hiện tại (có thể bị lọc)
+        self.data = pd.read_csv(CSV_FILE)
+        self.original_data = self.data.copy()  # Lưu trữ dữ liệu gốc
+        
         
         # self.data = read_csv_data()
         self.current_page = 1
@@ -43,6 +45,7 @@ class DataApp:
         # Treeview và thanh cuộn
         self.tree_frame = ttk.Frame(root)
         self.tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.frame_data = ttk.Frame(root)
 
         self.tree, self.v_scroll, self.h_scroll = self.create_treeview_with_scrollbars(
             parent_frame=self.tree_frame, columns=list(self.data.columns), height=20
@@ -61,8 +64,10 @@ class DataApp:
         ttk.Button(self.menu_frame, text="Sắp xếp", command=self.open_sort_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Lọc", command=self.open_filter_window).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.menu_frame, text="Xem biểu đồ", command=self.view_chart).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Khôi phục", command=self.clear).pack(side=tk.LEFT, padx=10)
-        ttk.Button(self.menu_frame, text="Thoát", command=root.quit).pack(side=tk.RIGHT, padx=10)
+        ttk.Button(self.menu_frame, text="Khôi phục Treeview", command=self.restore_data).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Lưu thay đổi", command=self.save_changes).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Khôi phục Treeview", command=self.update_treeview).pack(side=tk.LEFT, padx=10)
+        # ttk.Button(self.menu_frame, text="Làm sạch dữ liệu", command=self.clean_data).pack(side=tk.LEFT, padx=10)
 
         # Điều hướng trang
         self.nav_frame = ttk.Frame(root)
@@ -123,8 +128,6 @@ class DataApp:
                     messagebox.showinfo("Thành công", "Dữ liệu đã được xóa.")
                 except ValueError as e:
                     messagebox.showerror("Lỗi", str(e))
-
-
 
         ttk.Button(action_window, text="Cập nhật", command=update_record).pack(pady=5)
         ttk.Button(action_window, text="Xóa", command=delete_record).pack(pady=5)
@@ -224,7 +227,7 @@ class DataApp:
         
         tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height, selectmode="extended")
 
-        tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
+        # tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=height)
         for col in columns:
             tree.heading(col, text=col)
             tree.column(col, width=150, anchor=tk.CENTER)
@@ -268,12 +271,8 @@ class DataApp:
                 except ValueError:
                     errors.append(f"Trường '{col}' phải là số.")
             elif col == "Number of Children":
-                try:
-                    value = float(value)
-                    if value < 0:
-                        errors.append(f"Trường '{col}' phải là số không âm." )
-                except ValueError:
-                    errors.append(f"Trường '{col}' phải là số.")
+                    if not str(value).isdigit() or not (0 <= int(value) <= 20):
+                        errors.append(f"Trường '{col}' phải là số từ 0 đến 20.")
             elif col in VALID_VALUES and value not in VALID_VALUES[col]:
                 errors.append(f"Trường '{col}' phải thuộc {VALID_VALUES[col]}.")
 
@@ -293,9 +292,12 @@ class DataApp:
 
 
     def open_input_window(self, title, action_callback, record_data=None):
+        """
+        Mở cửa số nhập liệu
+        """
         input_window = tk.Toplevel(self.root)
         input_window.title(title)
-        input_window.geometry("600x600")
+        input_window.geometry("400x600")
 
         widgets = {}
         for i, col in enumerate(self.data.columns):
@@ -322,12 +324,10 @@ class DataApp:
                     else:
                         data[col] = int(value)
                 elif col == "Number of Children":
-                    try:
-                        value = float(value)
-                        if value < 0:
-                            errors.append(f"Trường '{col}' phải là số không âm." )
-                    except ValueError:
-                        errors.append(f"Trường '{col}' phải là số.")
+                    if not value.isdigit() or not (0 <= int(value) <= 20):
+                        errors.append(f"Trường '{col}' phải là số từ 0 đến 20")
+                    else:
+                        data[col] = int(value)
                 elif col == "Income":
                     if not value.replace('.', '', 1).isdigit() or float(value) < 0:
                         errors.append(f"Trường '{col}' phải là số không âm.")
@@ -358,44 +358,50 @@ class DataApp:
 
     def open_search_window(self):
         """
-        Mở cửa sổ tìm kiếm để người dùng tìm theo bất kỳ cột nào.
+        Mở cửa sổ tìm kiếm nhỏ để người dùng tìm theo bất kỳ cột nào ngay trên cửa sổ Treeview chính.
         """
         def perform_search():
-            column = column_combobox.get()
-            value = value_entry.get().strip()
-            if not column or not value:
-                messagebox.showerror("Lỗi", "Vui lòng chọn cột và nhập giá trị cần tìm.")
+            column = column_combobox.get()  # Cột người dùng chọn
+            value = value_entry.get().strip()  # Giá trị người dùng nhập
+            if not value:
+                messagebox.showerror("Lỗi", "Vui lòng nhập giá trị cần tìm.")
                 return
-            results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
-            for row in results_tree.get_children():
-                results_tree.delete(row)
+
+            if not column:  # Nếu không chọn cột, tìm kiếm trong tất cả các cột
+                # Tìm kiếm trong tất cả các cột
+                results = self.data[self.data.apply(lambda row: row.astype(str).str.contains(value, case=False, na=False).any(), axis=1)]
+            else:  # Nếu chọn cột, tìm kiếm trong cột đó
+                results = self.data[self.data[column].astype(str).str.contains(value, case=False, na=False)]
+
+            if results.empty:
+                messagebox.showinfo("Thông báo", "Không có kết quả tìm kiếm.")
+                return
+
+            # Xóa các kết quả cũ trong Treeview chính
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # Chèn các kết quả tìm kiếm vào Treeview chính
             for idx, row in results.iterrows():
-                results_tree.insert("", tk.END, values=list(row), tags=(idx,))
+                self.tree.insert("", tk.END, values=list(row), tags=(idx,))
 
-        search_window = tk.Toplevel(self.root)
-        search_window.title("Tìm kiếm dữ liệu")
-        search_window.geometry("800x600")
+        # Tạo một khung tìm kiếm nhỏ gọn trên cửa sổ chính
+        search_frame = ttk.Frame(self.root)
+        search_frame.pack(pady=10, padx=10, fill=tk.X)
 
-        ttk.Label(search_window, text="Chọn cột để tìm kiếm:").pack(pady=5)
-        column_combobox = ttk.Combobox(search_window, values=list(self.data.columns), state="readonly")
-        column_combobox.pack(pady=5)
+        # Label và combobox chọn cột
+        ttk.Label(search_frame, text="Chọn cột để tìm kiếm:").pack(side=tk.LEFT, padx=5)
+        column_combobox = ttk.Combobox(search_frame, values=[""] + list(self.data.columns), state="readonly")  # Thêm lựa chọn trống cho tìm kiếm trong tất cả cột
+        column_combobox.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(search_window, text="Nhập giá trị cần tìm:").pack(pady=5)
-        value_entry = ttk.Entry(search_window, width=30)
-        value_entry.pack(pady=5)
+        # Label và ô nhập giá trị cần tìm
+        ttk.Label(search_frame, text="Nhập giá trị cần tìm:").pack(side=tk.LEFT, padx=5)
+        value_entry = ttk.Entry(search_frame, width=30)
+        value_entry.pack(side=tk.LEFT, padx=5)
 
-        ttk.Button(search_window, text="Tìm kiếm", command=perform_search).pack(pady=10)
-
-        # Tạo Treeview với thanh cuộn
-        results_tree, _, _ = self.create_treeview_with_scrollbars(
-            parent_frame=search_window, 
-            columns=list(self.data.columns), 
-            height=15
-        )
-
-        # results_tree.bind("<Double-1>", self.on_treeview_double_click)  # Thêm sự kiện nhấp đúp
-        # Thêm nút "Xóa" để xóa các dòng đã chọn
-        ttk.Button(search_window, text="Xóa dữ liệu", command=lambda: self.delete_records_in_search(results_tree)).pack(pady=10)
+        # Nút tìm kiếm
+        ttk.Button(search_frame, text="Tìm kiếm", command=perform_search).pack(side=tk.LEFT, padx=10)
+       
         
     def open_filter_window(self):
         """Mở cửa sổ lọc dữ liệu."""
@@ -461,16 +467,16 @@ class DataApp:
 
         ttk.Button(sort_window, text="Sắp xếp", command=perform_sort).pack(pady=10)
 
-    def clear(self):
-        """
-        Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc) và cập nhật lại file CSV.
-        """
-        self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
-        self.update_treeview()  # Cập nhật Treeview với dữ liệu gốc
-        self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
-        messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
+    # def clear(self):
+    #     """
+    #     Khôi phục dữ liệu về trạng thái ban đầu (xóa bộ lọc) và cập nhật lại file CSV.
+    #     """
+    #     self.data = self.original_data.copy()  # Khôi phục dữ liệu gốc
+    #     self.update_treeview()  # Cập nhật Treeview với dữ liệu gốc
+    #     self.data.to_csv(CSV_FILE, index=False)  # Cập nhật lại file CSV với dữ liệu gốc
+    #     messagebox.showinfo("Thông báo", "Dữ liệu đã được khôi phục về trạng thái ban đầu.")
 
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Thêm import này
+    
 
     def view_chart(self):
         """
@@ -481,16 +487,20 @@ class DataApp:
             Vẽ biểu đồ cho cột đã chọn từ dữ liệu trong DataFrame hoặc từ các hàm trong visualization.py.
             """
             selected_chart = chart_combobox.get()
-            file_path_age_education = 'filtered_depression_data.csv'
-            file_path_employment = 'cleaned_and_predicted_data.csv'
-            self.data_age_education = pd.read_csv(file_path_age_education)
-            self.data_employment = pd.read_csv(file_path_employment)
-            if selected_chart == "Biểu đồ phân bố tuổi":
-                plot_age_distribution(self.data_age_education)
-            elif selected_chart == "Biểu đồ học vấn và trầm cảm":
-                plot_education_vs_depression(self.data_age_education)
-            elif selected_chart == "Biểu đồ việc làm và trầm cảm":
-                plot_employment_vs_depression(self.data_employment)
+            file_path_1 = 'dataset\\filtered_depression_data.csv'
+            file_path_2 = 'dataset\\cleaned_and_predicted_data.csv'
+            self.data_1 = pd.read_csv(file_path_1)
+            self.data_2 = pd.read_csv(file_path_2)
+            if selected_chart == "Phân phối nhóm tuổi theo nguy cơ trầm cảm":
+                plot_age_distribution(self.data_1)
+            elif selected_chart == "Nguy cơ trầm cảm theo trình độ học vấn":
+                plot_education_vs_depression(self.data_1)
+            elif selected_chart == "Trạng thái việc làm và trầm cảm":
+                plot_employment_vs_depression(self.data_2)
+            elif selected_chart == "Tương quan tình trạng hôn nhân và nguy cơ trầm cảm":
+                plot_marital_vs_depression(self.data_2)
+            elif selected_chart == "Tương quan giấc ngủ và nguy cơ trầm cảm":
+                plot_sleep_vs_depression(self.data_1)
             else:
                 return
 
@@ -518,13 +528,15 @@ class DataApp:
         # Cửa sổ hiển thị biểu đồ
         chart_window = tk.Toplevel(self.root)
         chart_window.title("Xem Biểu đồ")
-        chart_window.geometry("500x600")
+        chart_window.geometry("500x500")
 
         ttk.Label(chart_window, text="Chọn biểu đồ:").pack(pady=10)
         chart_combobox = ttk.Combobox(chart_window, values=[
-            "Biểu đồ phân bố tuổi", 
-            "Biểu đồ học vấn và trầm cảm", 
-            "Biểu đồ việc làm và trầm cảm",
+            "Phân phối nhóm tuổi theo nguy cơ trầm cảm", 
+            "Nguy cơ trầm cảm theo trình độ học vấn", 
+            "Trạng thái việc làm và trầm cảm",
+            "Tương quan tình trạng hôn nhân và nguy cơ trầm cảm",
+            "Tương quan giấc ngủ và nguy cơ trầm cảm",
         ], )
         chart_combobox.pack(pady=5)
 
@@ -533,7 +545,37 @@ class DataApp:
         # column_combobox.pack(pady=5)
 
         ttk.Button(chart_window, text="Vẽ biểu đồ", command=plot_chart).pack(pady=10)
+    
+    # def clean_data(self):
+    #     """
+    #     Hàm xử lý khi nhấn nút "Làm sạch dữ liệu"
+    #     """
+    #     try:
+    #         file_path = 'dataset\\depression_data.csv'  # Đường dẫn đến file CSV gốc
+    #         output_path = 'dataset\\cleaned_and_predicted_data.csv'  # Đường dẫn đến file kết quả
+    #         cleaned_data = clean_data(file_path, output_path)  # Gọi hàm clean_data
+    #         messagebox.showinfo("Thành công", "Dữ liệu đã được làm sạch và lưu vào file mới.")
+    #     except Exception as e:
+    #         messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
 
+    def save_changes(self):
+        """
+        Lưu các thay đổi từ self.data vào self.original_data.
+        Điều này sẽ cập nhật dữ liệu gốc với tất cả các thay đổi (thêm, xóa, cập nhật).
+        """
+        self.original_data = self.data.copy()  # Sao chép dữ liệu hiện tại vào dữ liệu gốc
+        messagebox.showinfo("Thông báo", "Thay đổi đã được lưu!")
+        
+    def restore_data(self):
+        """
+        Khôi phục dữ liệu về trạng thái ban đầu (không bao gồm các thay đổi về tìm kiếm, lọc, sắp xếp).
+        Các thay đổi về thêm, xóa, cập nhật vẫn được lưu giữ.
+        """
+        # Khôi phục dữ liệu về trạng thái ban đầu
+        self.data = self.original_data.copy()
+    
+        # Cập nhật lại Treeview để hiển thị dữ liệu đã khôi phục
+        self.update_treeview()
     def prev_page(self):
         if self.current_page > 1:
             self.current_page -= 1
@@ -554,6 +596,7 @@ class DataApp:
                 raise ValueError
         except ValueError:
             messagebox.showerror("Lỗi", "Số trang phải là số hợp lệ.")
+
 
 
 if __name__ == "__main__":
