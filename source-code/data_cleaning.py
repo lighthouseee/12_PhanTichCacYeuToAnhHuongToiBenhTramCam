@@ -93,7 +93,7 @@ def predict_depression_risk(data: pd.DataFrame) -> pd.Series:
     """
     Dự đoán mức độ trầm cảm dựa trên các yếu tố liên quan trong dữ liệu.
     - Tính điểm rủi ro bằng cách gán điểm cho các điều kiện có nguy cơ cao (ví dụ: thu nhập thấp, lối sống ít vận động, v.v.).
-    - Phân loại mức độ rủi ro dựa trên tổng điểm:
+    - Phân loại mức độ trầm cảm dựa trên tổng điểm:
     + Very High: Điểm >= 8
     + High: Điểm >= 6
     + Medium: Điểm >= 4
